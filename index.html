@@ -133,14 +133,20 @@
       bottom: 0;
       left: 0;
       right: 0;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      display: flex;
+      flex-direction: row;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
       background: var(--surface);
       border-top: 1px solid var(--border);
       padding: 8px 6px 10px;
-      gap: 6px;
+      gap: 4px;
       box-shadow: 0 -8px 24px rgba(0,0,0,0.06);
     }
+    .nav-bottom::-webkit-scrollbar { display: none; }
+    .nav-btn { flex-shrink: 0; min-width: 64px; }
     .nav-btn {
       border: none;
       background: transparent;
@@ -313,6 +319,62 @@
     .calendar-day.active { outline: 2px solid var(--accent); }
     .calendar-day .day-num { font-weight: 600; margin-bottom: 4px; }
     .calendar-day .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+    /* ── CALCULADORA ── */
+    .calc-display {
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px;
+      padding: 16px; text-align: right; margin-bottom: 12px;
+    }
+    .calc-display .calc-expr { font-size: 0.85rem; color: var(--muted); min-height: 20px; }
+    .calc-display .calc-result { font-size: 2rem; font-weight: 700; color: var(--text); word-break: break-all; }
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .calc-btn {
+      padding: 14px 6px; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--surface-2); color: var(--text); font-size: 0.95rem; font-weight: 500;
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+    .calc-btn:active { transform: scale(0.94); }
+    .calc-btn.op { background: linear-gradient(135deg, var(--accent-3), var(--surface-2)); color: var(--accent); }
+    .calc-btn.eq { background: var(--accent); color: white; border-color: var(--accent); }
+    .calc-btn.fn { background: var(--surface); font-size: 0.78rem; }
+    .calc-btn.clear { background: #fdf0f2; color: var(--danger); border-color: #f1c8ce; }
+    .calc-history { margin-top: 14px; max-height: 180px; overflow-y: auto; }
+    .calc-history-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); }
+
+    /* ── QUIZ ── */
+    .quiz-question { font-size: 1rem; font-weight: 600; margin-bottom: 14px; line-height: 1.5; }
+    .quiz-option {
+      width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 8px;
+      border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2);
+      color: var(--text); transition: background 0.2s ease;
+    }
+    .quiz-option:hover:not(:disabled) { background: linear-gradient(135deg, var(--accent-3), var(--surface-2)); }
+    .quiz-option.correct { background: #eaf6eb; border-color: var(--success); color: var(--success); }
+    .quiz-option.incorrect { background: #fdf0f2; border-color: var(--danger); color: var(--danger); }
+    .quiz-explanation { margin-top: 10px; padding: 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); font-size: 0.88rem; line-height: 1.5; }
+    .quiz-progress-bar { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-bottom: 14px; }
+    .quiz-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: inherit; transition: width 0.3s ease; }
+    .quiz-score-card { text-align: center; padding: 24px; }
+    .quiz-score-num { font-size: 3rem; font-weight: 700; color: var(--accent); }
+
+    /* ── PLAN DE ESTUDIO ── */
+    .plan-trimester { margin-bottom: 18px; }
+    .plan-trimester-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .plan-trimester-title { font-size: 0.9rem; font-weight: 700; }
+    .plan-trimester-progress { font-size: 0.8rem; color: var(--muted); }
+    .plan-ramo {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 6px;
+      border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2);
+      transition: background 0.2s ease;
+    }
+    .plan-ramo.completed { background: #eaf6eb; border-color: #a3d9b1; }
+    .plan-ramo input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--success); flex-shrink: 0; }
+    .plan-ramo-name { flex: 1; font-size: 0.88rem; }
+    .plan-ramo.completed .plan-ramo-name { text-decoration: line-through; color: var(--muted); }
+    .plan-ramo-code { font-size: 0.72rem; color: var(--muted); background: var(--surface); padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); }
+    .plan-total-bar { margin-bottom: 20px; }
+    .plan-total-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; }
+    .plan-total-pct { font-weight: 700; color: var(--accent); font-size: 1.1rem; }
 
     @media (min-width: 720px) {
       .content { padding: 24px; gap: 18px; }
@@ -566,6 +628,72 @@
       </section>
 
       <section id="tab-analysis" class="tab-panel hidden"></section>
+
+      <!-- ── QUIZ ── -->
+      <section id="tab-quiz" class="tab-panel hidden">
+        <div class="card">
+          <h2>🧠 Quiz inteligente</h2>
+          <p>Genera preguntas automáticamente desde tus apuntes usando Gemini.</p>
+          <div class="row">
+            <div>
+              <label>Trimestre</label>
+              <select id="quiz-trimester"></select>
+            </div>
+            <div>
+              <label>Ramo</label>
+              <select id="quiz-subject"></select>
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div>
+              <label>Cantidad de preguntas</label>
+              <select id="quiz-count">
+                <option value="10">10 preguntas</option>
+                <option value="15" selected>15 preguntas</option>
+                <option value="20">20 preguntas</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:end;">
+              <button id="quiz-generate-btn" class="primary-btn">Generar Quiz</button>
+            </div>
+          </div>
+          <div id="quiz-spinner" class="hidden" style="margin-top:10px;"><span class="tag">Generando preguntas con Gemini…</span></div>
+        </div>
+        <div id="quiz-area"></div>
+      </section>
+
+      <!-- ── PLAN DE ESTUDIO ── -->
+      <section id="tab-studyplan" class="tab-panel hidden">
+        <div class="card">
+          <h2>🎓 Plan de Estudio</h2>
+          <p>Ingeniería Industrial UNAB · 8 Trimestres · 35 ramos</p>
+          <div class="plan-total-bar">
+            <div class="plan-total-label">
+              <span>Progreso total de la carrera</span>
+              <span class="plan-total-pct" id="plan-total-pct">0%</span>
+            </div>
+            <div class="progress-track"><div id="plan-total-bar" class="progress-bar" style="width:0%"></div></div>
+            <div class="small" style="margin-top:6px;" id="plan-total-count">0 de 35 ramos aprobados</div>
+          </div>
+          <div id="plan-trimestres"></div>
+        </div>
+      </section>
+
+      <!-- ── CALCULADORA ── -->
+      <section id="tab-calculator" class="tab-panel hidden">
+        <div class="card">
+          <h2>🧮 Calculadora Científica</h2>
+          <div class="calc-display">
+            <div class="calc-expr" id="calc-expr"></div>
+            <div class="calc-result" id="calc-result">0</div>
+          </div>
+          <div class="calc-grid" id="calc-grid"></div>
+          <div style="margin-top:14px;">
+            <h3 style="margin-bottom:8px;">Historial</h3>
+            <div class="calc-history" id="calc-history"></div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <nav class="nav-bottom" aria-label="Navegación principal">
@@ -574,7 +702,10 @@
       <button class="nav-btn" data-tab="schedule">🗓️<span>Horario</span></button>
       <button class="nav-btn" data-tab="tasks">📋<span>Tareas</span></button>
       <button class="nav-btn" data-tab="flashcards">🃏<span>Flashcards</span></button>
-      <button class="nav-btn" data-tab="analysis">🔍<span>Analizar Texto</span></button>
+      <button class="nav-btn" data-tab="analysis">🔍<span>Analizar</span></button>
+      <button class="nav-btn" data-tab="quiz">🧠<span>Quiz</span></button>
+      <button class="nav-btn" data-tab="studyplan">🎓<span>Mi Carrera</span></button>
+      <button class="nav-btn" data-tab="calculator">🧮<span>Calc</span></button>
     </nav>
   </div>
 
@@ -664,18 +795,14 @@
       profile: { displayName: 'Estudiante', photoURL: '' },
       settings: { darkMode: false, geminiKey: '' },
       notes: [],
-      classes: [
-        { id: 1, name: 'Matemática', day: 'Lunes', start: '08:00', end: '09:30', color: '#a78bfa' },
-        { id: 2, name: 'Historia', day: 'Miércoles', start: '10:00', end: '11:30', color: '#f3dad3' }
-      ],
-      tasks: [
-        { id: 1, name: 'Entrega informe', subject: 'Historia', date: '2026-06-30', priority: 'alta', type: 'tarea', score: '20%', completed: false, createdAt: new Date().toISOString() },
-        { id: 2, name: 'Prueba de álgebra', subject: 'Matemática', date: '2026-07-02', priority: 'media', type: 'evaluacion', score: '30%', completed: false, createdAt: new Date().toISOString() }
-      ],
+      classes: [],
+      tasks: [],
       flashcards: [],
       textAnalyses: [],
       aiSummaries: [],
-      studyPlanProgress: { updatedAt: new Date().toISOString(), completedTasks: 0, totalTasks: 2 },
+      quizHistory: [],
+      studyPlanCompleted: {},
+      studyPlanProgress: { updatedAt: new Date().toISOString(), completedTasks: 0, totalTasks: 0 },
       analysisContext: { trimester: TRIMESTRES[0], subject: '', manualSubject: '' }
     };
 
@@ -1129,6 +1256,8 @@
         if (data.textAnalyses) state.textAnalyses = data.textAnalyses;
         if (data.aiSummaries) state.aiSummaries = data.aiSummaries;
         if (data.studyPlanProgress) state.studyPlanProgress = { ...state.studyPlanProgress, ...data.studyPlanProgress };
+        if (data.studyPlanCompleted) state.studyPlanCompleted = data.studyPlanCompleted;
+        if (data.quizHistory) state.quizHistory = data.quizHistory;
         saveState();
         applyTheme();
         render();
@@ -1152,7 +1281,9 @@
           flashcards: state.flashcards,
           textAnalyses: state.textAnalyses,
           aiSummaries: state.aiSummaries,
-          studyPlanProgress: state.studyPlanProgress
+          studyPlanProgress: state.studyPlanProgress,
+          studyPlanCompleted: state.studyPlanCompleted || {},
+          quizHistory: state.quizHistory || []
         }, { merge: true });
         setSyncStatus('synced');
       } catch (error) {
@@ -1190,6 +1321,10 @@
       if (tab === 'schedule') renderSchedule();
       if (tab === 'tasks') renderTasks();
       if (tab === 'flashcards') renderFlashcards();
+      if (tab === 'analysis') renderTextAnalysis();
+      if (tab === 'quiz') renderQuizSetup();
+      if (tab === 'studyplan') renderStudyPlan();
+      if (tab === 'calculator') renderCalculator();
     }
 
     function updateStudyPlanProgress() {
@@ -1437,6 +1572,7 @@
       renderTasks();
       renderFlashcards();
       renderTextAnalysis();
+      renderStudyPlan();
       renderUser();
     }
 
@@ -1809,6 +1945,312 @@
       renderTextAnalysis();
     }
 
+    // ── PLAN DE ESTUDIO ──
+    function renderStudyPlan() {
+      if (!state.studyPlanCompleted) state.studyPlanCompleted = {};
+      const completed = state.studyPlanCompleted;
+      const allRamos = Object.values(MALLA).flat();
+      const totalRamos = allRamos.length;
+      const completedCount = allRamos.filter(r => completed[r.codigo]).length;
+      const pct = totalRamos > 0 ? Math.round((completedCount / totalRamos) * 100) : 0;
+
+      const totalPct = document.getElementById('plan-total-pct');
+      const totalBar = document.getElementById('plan-total-bar');
+      const totalCount = document.getElementById('plan-total-count');
+      if (totalPct) totalPct.textContent = pct + '%';
+      if (totalBar) totalBar.style.width = pct + '%';
+      if (totalCount) totalCount.textContent = `${completedCount} de ${totalRamos} ramos aprobados`;
+
+      const container = document.getElementById('plan-trimestres');
+      if (!container) return;
+      container.innerHTML = Object.entries(MALLA).map(([trimestre, ramos]) => {
+        const trimCompleted = ramos.filter(r => completed[r.codigo]).length;
+        const trimPct = Math.round((trimCompleted / ramos.length) * 100);
+        return `
+          <div class="plan-trimester">
+            <div class="plan-trimester-header">
+              <span class="plan-trimester-title">${escapeHtml(trimestre)}</span>
+              <span class="plan-trimester-progress">${trimCompleted}/${ramos.length} · ${trimPct}%</span>
+            </div>
+            <div class="progress-track" style="margin-bottom:10px;height:6px;">
+              <div class="progress-bar" style="width:${trimPct}%"></div>
+            </div>
+            ${ramos.map(r => `
+              <div class="plan-ramo ${completed[r.codigo] ? 'completed' : ''}">
+                <input type="checkbox" ${completed[r.codigo] ? 'checked' : ''} onchange="toggleRamo('${r.codigo}', this.checked)" />
+                <span class="plan-ramo-name">${escapeHtml(r.nombre)}</span>
+                <span class="plan-ramo-code">${escapeHtml(r.codigo)}</span>
+              </div>`).join('')}
+          </div>`;
+      }).join('');
+    }
+
+    window.toggleRamo = function(codigo, checked) {
+      if (!state.studyPlanCompleted) state.studyPlanCompleted = {};
+      state.studyPlanCompleted[codigo] = checked;
+      saveState();
+      syncToFirestoreIfPossible();
+      renderStudyPlan();
+    };
+
+    // ── CALCULADORA ──
+    let calcExpr = '';
+    let calcHistory = [];
+    let calcRendered = false;
+
+    function renderCalculator() {
+      if (calcRendered) { renderCalcHistory(); return; }
+      calcRendered = true;
+      const grid = document.getElementById('calc-grid');
+      if (!grid) return;
+      const buttons = [
+        { label: 'sin', type: 'fn', action: () => calcApplyFn('Math.sin') },
+        { label: 'cos', type: 'fn', action: () => calcApplyFn('Math.cos') },
+        { label: 'tan', type: 'fn', action: () => calcApplyFn('Math.tan') },
+        { label: '√', type: 'fn', action: () => calcApplyFn('Math.sqrt') },
+        { label: 'log', type: 'fn', action: () => calcApplyFn('Math.log10') },
+        { label: 'ln', type: 'fn', action: () => calcApplyFn('Math.log') },
+        { label: 'xʸ', type: 'fn', action: () => calcAppend('**') },
+        { label: 'π', type: 'fn', action: () => calcAppend('Math.PI') },
+        { label: 'C', type: 'clear', action: () => calcClear() },
+        { label: '⌫', type: 'fn', action: () => calcBackspace() },
+        { label: '%', type: 'op', action: () => calcAppend('%') },
+        { label: '÷', type: 'op', action: () => calcAppend('/') },
+        { label: '7', type: 'num', action: () => calcAppend('7') },
+        { label: '8', type: 'num', action: () => calcAppend('8') },
+        { label: '9', type: 'num', action: () => calcAppend('9') },
+        { label: '×', type: 'op', action: () => calcAppend('*') },
+        { label: '4', type: 'num', action: () => calcAppend('4') },
+        { label: '5', type: 'num', action: () => calcAppend('5') },
+        { label: '6', type: 'num', action: () => calcAppend('6') },
+        { label: '−', type: 'op', action: () => calcAppend('-') },
+        { label: '1', type: 'num', action: () => calcAppend('1') },
+        { label: '2', type: 'num', action: () => calcAppend('2') },
+        { label: '3', type: 'num', action: () => calcAppend('3') },
+        { label: '+', type: 'op', action: () => calcAppend('+') },
+        { label: '(', type: 'fn', action: () => calcAppend('(') },
+        { label: '0', type: 'num', action: () => calcAppend('0') },
+        { label: '.', type: 'num', action: () => calcAppend('.') },
+        { label: '=', type: 'eq', action: () => calcEval() },
+      ];
+      grid.innerHTML = buttons.map((btn, i) =>
+        `<button class="calc-btn ${btn.type}" id="cbtn-${i}">${btn.label}</button>`
+      ).join('');
+      buttons.forEach((btn, i) => {
+        document.getElementById(`cbtn-${i}`).addEventListener('click', btn.action);
+      });
+    }
+
+    function calcAppend(val) {
+      calcExpr += val;
+      calcUpdateDisplay();
+    }
+
+    function calcApplyFn(fn) {
+      calcExpr += fn + '(';
+      calcUpdateDisplay();
+    }
+
+    function calcClear() { calcExpr = ''; calcUpdateDisplay(true); }
+
+    function calcBackspace() {
+      calcExpr = calcExpr.slice(0, -1);
+      calcUpdateDisplay();
+    }
+
+    function calcEval() {
+      try {
+        const result = Function('"use strict"; return (' + calcExpr + ')')();
+        const rounded = Math.round(result * 1e10) / 1e10;
+        calcHistory.unshift({ expr: calcExpr, result: rounded });
+        if (calcHistory.length > 20) calcHistory.pop();
+        const display = document.getElementById('calc-result');
+        if (display) display.textContent = rounded;
+        const expr = document.getElementById('calc-expr');
+        if (expr) expr.textContent = calcExpr + ' =';
+        calcExpr = String(rounded);
+        renderCalcHistory();
+      } catch (e) {
+        const display = document.getElementById('calc-result');
+        if (display) display.textContent = 'Error';
+      }
+    }
+
+    function calcUpdateDisplay(clear = false) {
+      const display = document.getElementById('calc-result');
+      const expr = document.getElementById('calc-expr');
+      if (clear) { if (display) display.textContent = '0'; if (expr) expr.textContent = ''; return; }
+      if (expr) expr.textContent = calcExpr;
+      try {
+        if (calcExpr) {
+          const preview = Function('"use strict"; return (' + calcExpr + ')')();
+          if (display && !isNaN(preview)) display.textContent = Math.round(preview * 1e10) / 1e10;
+        }
+      } catch (e) {}
+    }
+
+    function renderCalcHistory() {
+      const el = document.getElementById('calc-history');
+      if (!el) return;
+      el.innerHTML = calcHistory.length ? calcHistory.map(h =>
+        `<div class="calc-history-item"><span>${escapeHtml(h.expr)}</span><span><strong>${h.result}</strong></span></div>`
+      ).join('') : '<div class="empty">Sin historial aún.</div>';
+    }
+
+    // ── QUIZ ──
+    let quizQuestions = [];
+    let quizCurrent = 0;
+    let quizScore = 0;
+    let quizAnswered = false;
+
+    function renderQuizSetup() {
+      const trimSel = document.getElementById('quiz-trimester');
+      const subjSel = document.getElementById('quiz-subject');
+      if (!trimSel || !subjSel) return;
+      trimSel.innerHTML = TRIMESTRES.map(t => `<option value="${t}">${t}</option>`).join('');
+      const updateSubjects = () => {
+        const t = trimSel.value;
+        const ramos = MALLA[t] || [];
+        subjSel.innerHTML = ramos.map(r => `<option value="${escapeHtml(r.nombre)}">${escapeHtml(r.nombre)}</option>`).join('');
+      };
+      updateSubjects();
+      trimSel.addEventListener('change', updateSubjects);
+      document.getElementById('quiz-generate-btn').onclick = generateQuiz;
+    }
+
+    async function generateQuiz() {
+      const subject = document.getElementById('quiz-subject').value;
+      const count = document.getElementById('quiz-count').value;
+      const spinner = document.getElementById('quiz-spinner');
+      const btn = document.getElementById('quiz-generate-btn');
+
+      const relatedNotes = state.notes.filter(n =>
+        n.text && n.text.toLowerCase().includes(subject.toLowerCase().split(' ')[0])
+      );
+      const notesContext = relatedNotes.slice(0, 3).map(n => n.text.slice(0, 800)).join('\n\n');
+      const context = notesContext || `Ramo universitario: ${subject}`;
+
+      btn.disabled = true;
+      if (spinner) spinner.classList.remove('hidden');
+
+      const prompt = `Eres un profesor universitario. Genera ${count} preguntas de opción múltiple en español sobre: "${subject}".
+Contexto disponible: ${context}
+
+Responde SOLO con JSON válido, sin texto adicional, con esta estructura exacta:
+{"questions":[{"question":"...","options":["A) ...","B) ...","C) ...","D) ..."],"correct":0,"explanation":"...","wrongExplanations":["por qué B es incorrecta","por qué C es incorrecta","por qué D es incorrecta"]}]}
+
+Donde "correct" es el índice (0-3) de la opción correcta.`;
+
+      const result = await callGemini(prompt);
+      btn.disabled = false;
+      if (spinner) spinner.classList.add('hidden');
+
+      if (!result) { alert('No se pudo generar el quiz. Revisa tu API key de Gemini.'); return; }
+
+      const parsed = parseGeminiJson(result);
+      if (!parsed?.questions?.length) { alert('No se pudo interpretar la respuesta de Gemini. Intenta de nuevo.'); return; }
+
+      quizQuestions = parsed.questions;
+      quizCurrent = 0;
+      quizScore = 0;
+      quizAnswered = false;
+      renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+      const area = document.getElementById('quiz-area');
+      if (!area) return;
+      if (quizCurrent >= quizQuestions.length) { renderQuizScore(); return; }
+      const q = quizQuestions[quizCurrent];
+      const pct = Math.round((quizCurrent / quizQuestions.length) * 100);
+      area.innerHTML = `
+        <div class="card">
+          <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:${pct}%"></div></div>
+          <div class="small" style="margin-bottom:12px;">Pregunta ${quizCurrent + 1} de ${quizQuestions.length} · ${quizScore} correctas</div>
+          <div class="quiz-question">${escapeHtml(q.question)}</div>
+          ${q.options.map((opt, i) => `<button class="quiz-option" id="qopt-${i}" onclick="answerQuiz(${i})">${escapeHtml(opt)}</button>`).join('')}
+          <button class="secondary-btn" id="quiz-reveal-btn" style="margin-top:8px;" onclick="revealAnswer()">👁 Ver respuesta</button>
+          <div id="quiz-explanation" class="hidden"></div>
+        </div>`;
+      quizAnswered = false;
+    }
+
+    window.answerQuiz = function(selected) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const q = quizQuestions[quizCurrent];
+      const isCorrect = selected === q.correct;
+      if (isCorrect) quizScore++;
+      for (let i = 0; i < q.options.length; i++) {
+        const btn = document.getElementById(`qopt-${i}`);
+        if (!btn) continue;
+        btn.disabled = true;
+        if (i === q.correct) btn.classList.add('correct');
+        else if (i === selected && !isCorrect) btn.classList.add('incorrect');
+      }
+      const expEl = document.getElementById('quiz-explanation');
+      if (expEl) {
+        expEl.classList.remove('hidden');
+        const wrongIdx = selected !== q.correct ? selected : -1;
+        const wrongMsg = wrongIdx >= 0 && q.wrongExplanations?.[wrongIdx > q.correct ? wrongIdx - 1 : wrongIdx]
+          ? `<p><strong>¿Por qué tu respuesta es incorrecta?</strong> ${escapeHtml(q.wrongExplanations[wrongIdx > q.correct ? wrongIdx - 1 : wrongIdx])}</p>` : '';
+        expEl.innerHTML = `<p>${isCorrect ? '✅' : '❌'} <strong>Respuesta correcta:</strong> ${escapeHtml(q.options[q.correct])}</p><p><strong>Explicación:</strong> ${escapeHtml(q.explanation || '')}</p>${wrongMsg}`;
+      }
+      const revealBtn = document.getElementById('quiz-reveal-btn');
+      if (revealBtn) revealBtn.style.display = 'none';
+      setTimeout(() => { quizCurrent++; renderQuizQuestion(); }, 3500);
+    };
+
+    window.revealAnswer = function() {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const q = quizQuestions[quizCurrent];
+      const btn = document.getElementById(`qopt-${q.correct}`);
+      if (btn) { btn.classList.add('correct'); btn.disabled = true; }
+      const expEl = document.getElementById('quiz-explanation');
+      if (expEl) {
+        expEl.classList.remove('hidden');
+        expEl.innerHTML = `<p>👁 <strong>Respuesta correcta:</strong> ${escapeHtml(q.options[q.correct])}</p><p>${escapeHtml(q.explanation || '')}</p>`;
+      }
+      const revealBtn = document.getElementById('quiz-reveal-btn');
+      if (revealBtn) revealBtn.style.display = 'none';
+      setTimeout(() => { quizCurrent++; renderQuizQuestion(); }, 3000);
+    };
+
+    function renderQuizScore() {
+      const area = document.getElementById('quiz-area');
+      const pct = Math.round((quizScore / quizQuestions.length) * 100);
+      const medal = pct >= 90 ? '🏆' : pct >= 70 ? '🎉' : pct >= 50 ? '📚' : '💪';
+      const msg = pct >= 90 ? '¡Excelente dominio del tema!' : pct >= 70 ? '¡Muy bien, sigue así!' : pct >= 50 ? 'Buen intento, sigue repasando.' : 'Hay que estudiar más este tema.';
+
+      if (!state.quizHistory) state.quizHistory = [];
+      state.quizHistory.unshift({
+        id: Date.now().toString(),
+        subject: document.getElementById('quiz-subject')?.value || '',
+        score: quizScore,
+        total: quizQuestions.length,
+        pct,
+        createdAt: new Date().toISOString()
+      });
+      saveState();
+      syncToFirestoreIfPossible();
+
+      area.innerHTML = `
+        <div class="card quiz-score-card">
+          <div style="font-size:3rem;">${medal}</div>
+          <div class="quiz-score-num">${quizScore}/${quizQuestions.length}</div>
+          <div style="font-size:1.2rem;margin:8px 0;">${pct}% correcto</div>
+          <p>${msg}</p>
+          ${renderTimestamp(new Date().toISOString())}
+          <div class="row" style="margin-top:16px;justify-content:center;">
+            <button class="primary-btn" onclick="generateQuiz()">Nuevo quiz</button>
+          </div>
+        </div>
+        ${state.quizHistory.length > 1 ? `<div class="card"><h3>Historial de quizzes</h3><div class="list">${state.quizHistory.slice(0,10).map(h => `
+          <div class="item"><div><strong>${escapeHtml(h.subject)}</strong>${renderTimestamp(h.createdAt)}</div>
+          <span class="pill ${h.pct >= 70 ? 'low' : h.pct >= 50 ? 'medium' : 'high'}">${h.score}/${h.total} · ${h.pct}%</span></div>`).join('')}</div></div>` : ''}`;
+    }
+
     function bindEvents() {
       loginBtn.addEventListener('click', loginWithGoogle);
       themeToggle.addEventListener('click', () => {
@@ -1855,6 +2297,7 @@
     window.toggleTask = toggleTask;
     window.viewAnalysis = viewAnalysis;
     window.deleteAnalysis = deleteAnalysis;
+    window.generateQuiz = generateQuiz;
   </script>
 </body>
 </html>
