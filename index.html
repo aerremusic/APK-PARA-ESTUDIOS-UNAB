@@ -195,6 +195,19 @@
     }
     .item strong { display: block; margin-bottom: 4px; }
     .item small { color: var(--muted); }
+    .timestamp-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent-3), var(--surface));
+      color: var(--muted);
+      border: 1px solid var(--border);
+      font-size: 0.72rem;
+      width: fit-content;
+    }
     .pill { border-radius: 999px; padding: 4px 8px; font-size: 0.75rem; display: inline-block; }
     .pill.high { background: #fbe3e6; color: var(--danger); }
     .pill.medium { background: #fdf2d8; color: #9f6b15; }
@@ -263,6 +276,17 @@
     .small { font-size: 0.85rem; color: var(--muted); }
     .danger { color: var(--danger); }
     .success { color: var(--success); }
+    .analysis-result {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .analysis-result ul { margin: 8px 0 0 18px; color: var(--muted); }
+    .analysis-result .urgent { color: var(--danger); font-weight: 600; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .chip-row .tag { background: linear-gradient(135deg, var(--accent-3), var(--surface)); }
 
     .calendar-grid {
       display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
@@ -342,6 +366,7 @@
             <h3>Progreso semanal</h3>
             <div id="weekly-progress-label">0%</div>
             <div class="progress-track"><div id="weekly-progress-bar" class="progress-bar" style="width:0%"></div></div>
+            <div id="study-plan-progress-meta" class="small" style="margin-top:8px;"></div>
           </div>
         </div>
       </section>
@@ -519,6 +544,8 @@
           <div id="flashcards-list" class="list"></div>
         </div>
       </section>
+
+      <section id="tab-analysis" class="tab-panel hidden"></section>
     </main>
 
     <nav class="nav-bottom" aria-label="Navegación principal">
@@ -527,6 +554,7 @@
       <button class="nav-btn" data-tab="schedule">🗓️<span>Horario</span></button>
       <button class="nav-btn" data-tab="tasks">📋<span>Tareas</span></button>
       <button class="nav-btn" data-tab="flashcards">🃏<span>Flashcards</span></button>
+      <button class="nav-btn" data-tab="analysis">🔍<span>Analizar Texto</span></button>
     </nav>
   </div>
 
@@ -558,6 +586,60 @@
     const STORAGE_KEY = 'studymeme-state-v1';
     const THEME_KEY = 'studymeme-theme';
     const USER_COLLECTION = 'users';
+    const MALLA = {
+      '1° Trimestre': [
+        { codigo: 'AIIN001', nombre: 'Análisis descriptivo de proceso' },
+        { codigo: 'FMMA005', nombre: 'Nivelación Matemática' },
+        { codigo: 'ATDF101', nombre: 'Tópicos de Ingeniería' },
+        { codigo: 'AACD103', nombre: 'Taller de Innovación y Emprendimiento I' },
+        { codigo: 'ATDF102', nombre: 'Introducción a la Programación' }
+      ],
+      '2° Trimestre': [
+        { codigo: 'CFSA3180', nombre: 'Elementos de Física y Medición' },
+        { codigo: 'FMMA015', nombre: 'Fundamentos de Matemáticas' },
+        { codigo: 'QUIA090', nombre: 'Química y Ambiente' },
+        { codigo: 'AIIN002', nombre: 'Introducción a los Métodos de optimización' }
+      ],
+      '3° Trimestre': [
+        { codigo: 'FMMA115', nombre: 'Cálculo Diferencial e Integral' },
+        { codigo: 'INGA119', nombre: 'Inglés I' },
+        { codigo: 'CFSA3220', nombre: 'Mecánica' },
+        { codigo: 'AACD102', nombre: 'Taller de Innovación y Emprendimiento II' }
+      ],
+      '4° Trimestre': [
+        { codigo: 'AIIN111', nombre: 'Procesos en Sistemas Industriales' },
+        { codigo: 'INGA129', nombre: 'Inglés II' },
+        { codigo: 'ATDF103', nombre: 'Base de Datos' },
+        { codigo: 'AIIN112', nombre: 'Investigación Operativa' }
+      ],
+      '5° Trimestre': [
+        { codigo: 'INGA239', nombre: 'Inglés III' },
+        { codigo: 'FMSA315', nombre: 'Taller de Métodos Cuantitativos' },
+        { codigo: 'AIIN412', nombre: 'Costos y Presupuestos' },
+        { codigo: 'AIIN113', nombre: 'Sistemas Productivos' },
+        { codigo: 'INGA249', nombre: 'Inglés IV' }
+      ],
+      '6° Trimestre': [
+        { codigo: 'AIIN314', nombre: 'Integrador I: Seminario de Ingeniería' },
+        { codigo: 'AIIN413', nombre: 'Ingeniería Económica' },
+        { codigo: 'AIIN114', nombre: 'Logística y Sistemas Productivos' },
+        { codigo: 'AIIN211', nombre: 'Modelamiento y diseño de Procesos' },
+        { codigo: 'CEGARS14', nombre: 'Responsabilidad Social' }
+      ],
+      '7° Trimestre': [
+        { codigo: 'ATDF105', nombre: 'Minería de Datos' },
+        { codigo: 'AIIN312', nombre: 'Portafolio Proyectos' },
+        { codigo: 'AIIN414', nombre: 'Evaluación de Proyectos' },
+        { codigo: 'AIIN213', nombre: 'Planificación y Mejora de Procesos' }
+      ],
+      '8° Trimestre': [
+        { codigo: 'ATDF106', nombre: 'Gestión de la Transformación Digital' },
+        { codigo: 'CEGARS14', nombre: 'Responsabilidad Social' },
+        { codigo: 'AIIN313', nombre: 'Integrador II: Proyecto de Título' },
+        { codigo: 'AIIN217', nombre: 'Tópicos de Especialidad' }
+      ]
+    };
+    const TRIMESTRES = Object.keys(MALLA);
     const defaultState = {
       profile: { displayName: 'Estudiante', photoURL: '' },
       settings: { darkMode: false, geminiKey: '' },
@@ -567,10 +649,14 @@
         { id: 2, name: 'Historia', day: 'Miércoles', start: '10:00', end: '11:30', color: '#f3dad3' }
       ],
       tasks: [
-        { id: 1, name: 'Entrega informe', subject: 'Historia', date: '2026-06-30', priority: 'alta', type: 'tarea', score: '20%', completed: false },
-        { id: 2, name: 'Prueba de álgebra', subject: 'Matemática', date: '2026-07-02', priority: 'media', type: 'evaluacion', score: '30%', completed: false }
+        { id: 1, name: 'Entrega informe', subject: 'Historia', date: '2026-06-30', priority: 'alta', type: 'tarea', score: '20%', completed: false, createdAt: new Date().toISOString() },
+        { id: 2, name: 'Prueba de álgebra', subject: 'Matemática', date: '2026-07-02', priority: 'media', type: 'evaluacion', score: '30%', completed: false, createdAt: new Date().toISOString() }
       ],
-      flashcards: []
+      flashcards: [],
+      textAnalyses: [],
+      aiSummaries: [],
+      studyPlanProgress: { updatedAt: new Date().toISOString(), completedTasks: 0, totalTasks: 2 },
+      analysisContext: { trimester: TRIMESTRES[0], subject: '', manualSubject: '' }
     };
 
     let state = loadState();
@@ -586,6 +672,7 @@
     let syncState = 'synced';
     let lastSavedAt = null;
     let firebaseReady = false;
+    let currentAnalysis = null;
 
     const loginScreen = document.getElementById('login-screen');
     const appShell = document.getElementById('app-shell');
@@ -606,7 +693,13 @@
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          return { ...defaultState, ...parsed, settings: { ...defaultState.settings, ...(parsed.settings || {}) }, profile: { ...defaultState.profile, ...(parsed.profile || {}) } };
+          return {
+            ...defaultState,
+            ...parsed,
+            settings: { ...defaultState.settings, ...(parsed.settings || {}) },
+            profile: { ...defaultState.profile, ...(parsed.profile || {}) },
+            analysisContext: { ...defaultState.analysisContext, ...(parsed.analysisContext || {}) }
+          };
         }
       } catch (error) {
         console.warn('No se pudo cargar el estado local', error);
@@ -617,6 +710,33 @@
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       lastSavedAt = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function getTimestamp(dateValue) {
+      const date = new Date(dateValue || new Date());
+      if (Number.isNaN(date.getTime())) return null;
+      return date;
+    }
+
+    function formatTimestamp(dateValue) {
+      const date = getTimestamp(dateValue);
+      if (!date) return 'Sin fecha';
+      const weekday = date.toLocaleDateString('es-CL', { weekday: 'long' });
+      const datePart = date.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
+      const timePart = date.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+      return `${weekday}, ${datePart} · ${timePart}`;
+    }
+
+    function getItemTimestamp(item) {
+      return getTimestamp(item?.createdAt || item?.updatedAt || item?.lastReviewedAt || item?.timestamp || item?.date)?.getTime() || 0;
+    }
+
+    function sortByNewest(items) {
+      return [...items].sort((a, b) => getItemTimestamp(b) - getItemTimestamp(a));
+    }
+
+    function renderTimestamp(dateValue) {
+      return `<span class="timestamp-pill">🕒 ${escapeHtml(formatTimestamp(dateValue))}</span>`;
     }
 
     function applyTheme() {
@@ -664,6 +784,142 @@
       loginBtn.disabled = isLoading;
       loginBtn.classList.toggle('loading', isLoading);
       loginBtn.textContent = isLoading ? 'Cargando...' : 'Entrar con Google';
+    }
+
+    function getAnalysisSubjectOptions(trimester) {
+      const subjects = (MALLA[trimester] || []).map((subject) => subject.nombre);
+      return [...subjects, '__manual__'];
+    }
+
+    function getAnalysisSubjectLabel() {
+      const manual = (state.analysisContext?.manualSubject || '').trim();
+      if (manual) return manual;
+      return state.analysisContext?.subject || 'General';
+    }
+
+    function getAnalysisTypeLabel(type) {
+      const labels = {
+        whatsapp: '💬 Conversación de WhatsApp/grupo',
+        professor: '📋 Instrucciones del profesor',
+        university: '📧 Correo o aviso universitario',
+        general: '📝 Texto general'
+      };
+      return labels[type] || '📝 Texto general';
+    }
+
+    function parseGeminiJson(text) {
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        const fenced = text.match(/```json\s*([\s\S]*?)```/i) || text.match(/```([\s\S]*?)```/i);
+        if (fenced) {
+          try {
+            return JSON.parse(fenced[1]);
+          } catch (err) {
+            return null;
+          }
+        }
+        return null;
+      }
+    }
+
+    async function callGemini(prompt) {
+      const key = state.settings.geminiKey || '';
+      if (!key) {
+        alert('Agrega tu API key de Gemini en Configuración para usar el analizador.');
+        return null;
+      }
+      try {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] })
+        });
+        const data = await response.json();
+        const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        return resultText;
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    }
+
+    async function analyzeTextWithGemini() {
+      const text = document.getElementById('analysis-text').value.trim();
+      const type = document.getElementById('analysis-type').value;
+      if (!text) {
+        alert('Pega el texto que quieres analizar primero.');
+        return;
+      }
+      const button = document.getElementById('analysis-analyze-btn');
+      const spinner = document.getElementById('analysis-spinner');
+      const result = document.getElementById('analysis-result');
+      if (button) button.disabled = true;
+      if (spinner) spinner.classList.remove('hidden');
+      if (result) result.innerHTML = '<div class="empty">Analizando tu texto con Gemini...</div>';
+      let prompt = '';
+      if (type === 'whatsapp') {
+        prompt = `Analiza este texto de WhatsApp o conversación de grupo. Responde SOLO con JSON válido con esta estructura: {"summary":"...","tasks":["..."],"myTasks":["..."],"dates":["..."],"urgent":["..."]}. Texto:\n\n${text}`;
+      } else if (type === 'professor') {
+        prompt = `Analiza estas instrucciones del profesor. Responde SOLO con JSON válido con esta estructura: {"summary":"...","requirements":["..."],"deliverables":["..."],"dates":["..."],"evaluation":["..."],"questions":["..."]}. Texto:\n\n${text}`;
+      } else if (type === 'university') {
+        prompt = `Analiza este correo o aviso universitario. Responde SOLO con JSON válido con esta estructura: {"summary":"...","actions":["..."],"dates":["..."],"urgent":["..."]}. Texto:\n\n${text}`;
+      } else {
+        prompt = `Analiza este texto general. Responde SOLO con JSON válido con esta estructura: {"summary":"...","points":["..."],"dates":["..."],"topics":["..."]}. Texto:\n\n${text}`;
+      }
+      const responseText = await callGemini(prompt);
+      if (!responseText) {
+        if (button) button.disabled = false;
+        if (spinner) spinner.classList.add('hidden');
+        alert('No se pudo analizar con Gemini. Revisa la API key o la conexión.');
+        return;
+      }
+      const parsed = parseGeminiJson(responseText) || { summary: responseText };
+      currentAnalysis = {
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        type,
+        typeLabel: getAnalysisTypeLabel(type),
+        subject: getAnalysisSubjectLabel(),
+        trimester: state.analysisContext?.trimester || TRIMESTRES[0],
+        manualSubject: state.analysisContext?.manualSubject || '',
+        summary: parsed.summary || responseText,
+        details: parsed,
+        text
+      };
+      if (button) button.disabled = false;
+      if (spinner) spinner.classList.add('hidden');
+      renderTextAnalysis();
+    }
+
+    function renderAnalysisResult(result) {
+      const details = result?.details || {};
+      if (!result) return '<div class="empty">Aún no hay análisis para mostrar.</div>';
+      const sections = [];
+      if (result.type === 'whatsapp') {
+        sections.push(`<div class="analysis-result"><h3>📌 Resumen</h3><p>${escapeHtml(details.summary || result.summary || 'Sin resumen')}</p></div>`);
+        sections.push(`<div class="analysis-result"><h3>✅ Tareas pendientes del grupo</h3><ul>${(details.tasks || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+        sections.push(`<div class="analysis-result"><h3>👤 Lo que te toca a ti</h3><ul>${(details.myTasks || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+        sections.push(`<div class="analysis-result"><h3>📅 Fechas y plazos</h3><ul>${(details.dates || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+        sections.push(`<div class="analysis-result"><h3>⚠️ Urgente</h3><ul>${(details.urgent || []).map((item) => `<li class="urgent">${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+      } else if (result.type === 'professor') {
+        sections.push(`<div class="analysis-result"><h3>📌 Resumen</h3><p>${escapeHtml(details.summary || result.summary || 'Sin resumen')}</p></div>`);
+        sections.push(`<div class="analysis-result"><h3>✅ Requisitos y entregables</h3><ul>${(details.requirements || details.deliverables || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+        sections.push(`<div class="analysis-result"><h3>📅 Fechas</h3><ul>${(details.dates || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+        sections.push(`<div class="analysis-result"><h3>⚠️ Criterios de evaluación</h3><ul>${(details.evaluation || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+        sections.push(`<div class="analysis-result"><h3>❓ Preguntas sugeridas</h3><ul>${(details.questions || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+      } else if (result.type === 'university') {
+        sections.push(`<div class="analysis-result"><h3>📌 Resumen</h3><p>${escapeHtml(details.summary || result.summary || 'Sin resumen')}</p></div>`);
+        sections.push(`<div class="analysis-result"><h3>✅ Acciones</h3><ul>${(details.actions || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+        sections.push(`<div class="analysis-result"><h3>📅 Fechas importantes</h3><ul>${(details.dates || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+        sections.push(`<div class="analysis-result"><h3>⚠️ Información urgente</h3><ul>${(details.urgent || []).map((item) => `<li class="urgent">${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+      } else {
+        sections.push(`<div class="analysis-result"><h3>📌 Resumen</h3><p>${escapeHtml(details.summary || result.summary || 'Sin resumen')}</p></div>`);
+        sections.push(`<div class="analysis-result"><h3>✅ Puntos clave</h3><ul>${(details.points || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+        sections.push(`<div class="analysis-result"><h3>📅 Fechas</h3><ul>${(details.dates || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`);
+        sections.push(`<div class="analysis-result"><h3>🏷️ Temas</h3><div class="chip-row">${(details.topics || []).map((topic) => `<span class="tag">${escapeHtml(topic)}</span>`).join('')}</div></div>`);
+      }
+      return sections.join('');
     }
 
     function initPwa() {
@@ -796,6 +1052,9 @@
         if (data.classes) state.classes = data.classes;
         if (data.tasks) state.tasks = data.tasks;
         if (data.flashcards) state.flashcards = data.flashcards;
+        if (data.textAnalyses) state.textAnalyses = data.textAnalyses;
+        if (data.aiSummaries) state.aiSummaries = data.aiSummaries;
+        if (data.studyPlanProgress) state.studyPlanProgress = { ...state.studyPlanProgress, ...data.studyPlanProgress };
         saveState();
         applyTheme();
         render();
@@ -816,7 +1075,10 @@
           notes: state.notes,
           classes: state.classes,
           tasks: state.tasks,
-          flashcards: state.flashcards
+          flashcards: state.flashcards,
+          textAnalyses: state.textAnalyses,
+          aiSummaries: state.aiSummaries,
+          studyPlanProgress: state.studyPlanProgress
         }, { merge: true });
         setSyncStatus('synced');
       } catch (error) {
@@ -828,6 +1090,7 @@
     function signOut() {
       if (firebaseAuth) firebaseAuth.signOut().catch(() => {});
       state = JSON.parse(JSON.stringify(defaultState));
+      updateStudyPlanProgress();
       saveState();
       applyTheme();
       render();
@@ -855,6 +1118,15 @@
       if (tab === 'flashcards') renderFlashcards();
     }
 
+    function updateStudyPlanProgress() {
+      state.studyPlanProgress = {
+        ...state.studyPlanProgress,
+        updatedAt: new Date().toISOString(),
+        completedTasks: state.tasks.filter((task) => task.completed).length,
+        totalTasks: state.tasks.length
+      };
+    }
+
     function renderHome() {
       const now = new Date();
       document.getElementById('home-date').textContent = now.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -862,7 +1134,7 @@
       const todayClasses = state.classes.filter((c) => c.day === getDayName(now.getDay()));
       const todaySchedule = document.getElementById('today-schedule');
       if (todayClasses.length) {
-        todaySchedule.innerHTML = todayClasses.map((c) => `<div class="item"><div><strong>${c.name}</strong><small>${c.start} - ${c.end}</small></div><span class="tag" style="background:${c.color}22;color:${c.color}">${c.day}</span></div>`).join('');
+        todaySchedule.innerHTML = todayClasses.map((c) => `<div class="item"><div><strong>${c.name}</strong><small>${c.start} - ${c.end}</small>${renderTimestamp(c.createdAt)}</div><span class="tag" style="background:${c.color}22;color:${c.color}">${c.day}</span></div>`).join('');
       } else {
         todaySchedule.innerHTML = '<div class="empty">Sin clases hoy. Aprovecha para repasar.</div>';
       }
@@ -870,7 +1142,7 @@
       const upcoming = state.tasks.filter((t) => !t.completed && t.type === 'evaluacion').sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
       const evalsEl = document.getElementById('upcoming-evals');
       if (upcoming.length) {
-        evalsEl.innerHTML = upcoming.map((item) => `<div class="item"><div><strong>${item.name}</strong><small>${item.subject} · ${formatDate(item.date)}</small></div><span class="pill ${item.priority}">${item.priority}</span></div>`).join('');
+        evalsEl.innerHTML = upcoming.map((item) => `<div class="item"><div><strong>${item.name}</strong><small>${item.subject} · ${formatDate(item.date)}</small>${renderTimestamp(item.createdAt || item.updatedAt || item.date)}</div><span class="pill ${item.priority}">${item.priority}</span></div>`).join('');
       } else {
         evalsEl.innerHTML = '<div class="empty">No hay evaluaciones próximas.</div>';
       }
@@ -881,6 +1153,10 @@
       const progress = state.tasks.length ? Math.round((completedCount / state.tasks.length) * 100) : 0;
       document.getElementById('weekly-progress-label').textContent = `${progress}%`;
       document.getElementById('weekly-progress-bar').style.width = `${progress}%`;
+      const progressMeta = document.getElementById('study-plan-progress-meta');
+      if (progressMeta) {
+        progressMeta.innerHTML = `<span class="timestamp-pill">🕒 ${escapeHtml(formatTimestamp(state.studyPlanProgress?.updatedAt))}</span>`;
+      }
     }
 
     function renderNotes() {
@@ -897,11 +1173,11 @@
         notesList.innerHTML = '<div class="empty">Aún no guardas apuntes.</div>';
         return;
       }
-      notesList.innerHTML = state.notes.slice().reverse().map((note) => `
+      notesList.innerHTML = sortByNewest(state.notes).map((note) => `
         <div class="item">
           <div>
             <strong>${escapeHtml(note.title || 'Sin título')}</strong>
-            <small>${formatDate(note.createdAt)}</small>
+            ${renderTimestamp(note.createdAt)}
             <div class="tag-row" style="margin-top:6px;">${(note.keywords || []).slice(0, 5).map((k) => `<span class="tag">${escapeHtml(k)}</span>`).join('')}</div>
           </div>
           <div class="row">
@@ -931,17 +1207,18 @@
       calendarGrid.innerHTML = cells.join('');
 
       const weeklyClasses = document.getElementById('weekly-classes');
-      weeklyClasses.innerHTML = state.classes.map((c) => `<div class="item"><div><strong>${c.name}</strong><small>${c.day} · ${c.start} - ${c.end}</small></div><span class="tag" style="background:${c.color}22;color:${c.color}">Clase</span></div>`).join('');
+      weeklyClasses.innerHTML = sortByNewest(state.classes).map((c) => `<div class="item"><div><strong>${c.name}</strong><small>${c.day} · ${c.start} - ${c.end}</small>${renderTimestamp(c.createdAt)}</div><span class="tag" style="background:${c.color}22;color:${c.color}">Clase</span></div>`).join('');
     }
 
     function renderTasks() {
       const pendingTasksList = document.getElementById('pending-tasks');
-      const sorted = [...state.tasks].filter((t) => !t.completed).sort((a, b) => a.date.localeCompare(b.date));
+      const sorted = sortByNewest([...state.tasks].filter((t) => !t.completed));
       pendingTasksList.innerHTML = sorted.length ? sorted.map((task) => `
         <div class="item">
           <div>
             <strong>${escapeHtml(task.name)}</strong>
             <small>${escapeHtml(task.subject)} · ${formatDate(task.date)} · ${task.score || ''}</small>
+            ${renderTimestamp(task.createdAt || task.updatedAt || task.date)}
           </div>
           <div class="row">
             <span class="pill ${task.priority}">${task.priority}</span>
@@ -950,12 +1227,13 @@
         </div>`).join('') : '<div class="empty">Sin tareas pendientes.</div>';
 
       const evaluationsList = document.getElementById('evaluations-list');
-      const evaluations = state.tasks.filter((t) => !t.completed && t.type === 'evaluacion').sort((a, b) => a.date.localeCompare(b.date));
+      const evaluations = sortByNewest(state.tasks.filter((t) => !t.completed && t.type === 'evaluacion'));
       evaluationsList.innerHTML = evaluations.length ? evaluations.map((item) => `
         <div class="item">
           <div>
             <strong>${escapeHtml(item.name)}</strong>
             <small>${escapeHtml(item.subject)} · ${formatDate(item.date)} · ${item.score}</small>
+            ${renderTimestamp(item.createdAt || item.updatedAt || item.date)}
           </div>
           <div class="row">
             <span class="pill medium">${item.priority}</span>
@@ -965,7 +1243,7 @@
     }
 
     function renderFlashcards() {
-      const flashcards = state.flashcards;
+      const flashcards = sortByNewest(state.flashcards);
       document.getElementById('flash-progress').textContent = `${flashcards.filter((f) => f.mastered).length} dominadas · ${flashcards.filter((f) => !f.mastered).length} pendientes`;
       const display = document.getElementById('flashcard-display');
       if (!flashcards.length) {
@@ -983,9 +1261,98 @@
           <div>
             <strong>${escapeHtml(card.front)}</strong>
             <small>${escapeHtml(card.subject)}</small>
+            ${renderTimestamp(card.createdAt || card.lastReviewedAt || card.updatedAt)}
           </div>
           <span class="pill ${card.mastered ? 'low' : 'medium'}">${card.mastered ? 'Dominada' : 'Pendiente'}</span>
         </div>`).join('');
+    }
+
+    function renderTextAnalysis() {
+      const container = document.getElementById('tab-analysis');
+      if (!container) return;
+      const trimester = state.analysisContext?.trimester || TRIMESTRES[0];
+      const subjectOptions = getAnalysisSubjectOptions(trimester);
+      const subject = state.analysisContext?.subject || '';
+      const manual = state.analysisContext?.manualSubject || '';
+      const currentResult = currentAnalysis;
+      container.innerHTML = `
+        <div class="card">
+          <h2>🔍 Analizar texto</h2>
+          <p>Pega conversaciones, instrucciones, correos o avisos y extrae información útil automáticamente.</p>
+          <div class="row">
+            <div>
+              <label>Tipo de texto</label>
+              <select id="analysis-type">
+                <option value="whatsapp" ${currentResult?.type === 'whatsapp' ? 'selected' : ''}>💬 Conversación de WhatsApp/grupo</option>
+                <option value="professor" ${currentResult?.type === 'professor' ? 'selected' : ''}>📋 Instrucciones del profesor</option>
+                <option value="university" ${currentResult?.type === 'university' ? 'selected' : ''}>📧 Correo o aviso universitario</option>
+                <option value="general" ${currentResult?.type === 'general' || !currentResult ? 'selected' : ''}>📝 Texto general</option>
+              </select>
+            </div>
+            <div>
+              <label>Trimestre</label>
+              <select id="analysis-trimester">${TRIMESTRES.map((item) => `<option value="${item}" ${item === trimester ? 'selected' : ''}>${item}</option>`).join('')}</select>
+            </div>
+            <div>
+              <label>Ramo</label>
+              <select id="analysis-subject">${subjectOptions.map((item) => `<option value="${item}" ${item === subject ? 'selected' : ''}>${item === '__manual__' ? 'Escribir manualmente' : item}</option>`).join('')}</select>
+            </div>
+          </div>
+          ${subject === '__manual__' || manual ? `<div class="row" style="margin-top:8px;"><div><label>Nombre manual del ramo</label><input id="analysis-manual-subject" type="text" value="${manual}" placeholder="Ej. Taller de lectura" /></div></div>` : ''}
+          <label for="analysis-text">Texto a analizar</label>
+          <textarea id="analysis-text" placeholder="Pega aquí un mensaje, aviso, instrucción o cualquier texto..."></textarea>
+          <div class="row" style="margin-top:10px;">
+            <button id="analysis-analyze-btn" class="primary-btn">Analizar con IA</button>
+            <button id="analysis-save-btn" class="secondary-btn" ${currentResult ? '' : 'disabled'}>Guardar análisis</button>
+            <button id="analysis-task-btn" class="secondary-btn" ${currentResult ? '' : 'disabled'}>Crear tarea desde esto</button>
+            <button id="analysis-copy-btn" class="secondary-btn" ${currentResult ? '' : 'disabled'}>Copiar resumen</button>
+          </div>
+          <div id="analysis-spinner" class="hidden" style="margin-top:10px;"><span class="tag">Procesando con Gemini…</span></div>
+          <div id="analysis-result">${currentResult ? renderAnalysisResult(currentResult) : '<div class="empty">Todavía no hay un análisis para mostrar.</div>'}</div>
+        </div>
+        <div class="card">
+          <h3>Historial de análisis guardados</h3>
+          <div id="analysis-history-list" class="list">${state.textAnalyses.length ? sortByNewest(state.textAnalyses).map((item) => `
+            <div class="item">
+              <div>
+                <strong>${escapeHtml(item.typeLabel || getAnalysisTypeLabel(item.type))}</strong>
+                ${renderTimestamp(item.createdAt)}
+                <small>${escapeHtml(item.trimester || 'Sin trimestre')} · ${escapeHtml(item.subject || 'Sin ramo')}</small>
+                <p style="margin:6px 0 0;">${escapeHtml((item.summary || '').slice(0, 140))}</p>
+              </div>
+              <div class="row">
+                <button class="secondary-btn" onclick="viewAnalysis('${item.id}')">Ver completo</button>
+                <button class="secondary-btn danger" onclick="deleteAnalysis('${item.id}')">Eliminar</button>
+              </div>
+            </div>`).join('') : '<div class="empty">No hay análisis guardados aún.</div>'}</div>
+        </div>
+      `;
+      document.getElementById('analysis-type').addEventListener('change', (event) => {
+        state.analysisContext.type = event.target.value;
+        saveState();
+      });
+      document.getElementById('analysis-trimester').addEventListener('change', (event) => {
+        state.analysisContext.trimester = event.target.value;
+        state.analysisContext.subject = '';
+        state.analysisContext.manualSubject = '';
+        saveState();
+        renderTextAnalysis();
+      });
+      document.getElementById('analysis-subject').addEventListener('change', (event) => {
+        state.analysisContext.subject = event.target.value === '__manual__' ? '' : event.target.value;
+        if (event.target.value === '__manual__') state.analysisContext.manualSubject = '';
+        saveState();
+        renderTextAnalysis();
+      });
+      const manualInput = document.getElementById('analysis-manual-subject');
+      if (manualInput) manualInput.addEventListener('input', (event) => {
+        state.analysisContext.manualSubject = event.target.value;
+        saveState();
+      });
+      document.getElementById('analysis-analyze-btn').addEventListener('click', analyzeTextWithGemini);
+      document.getElementById('analysis-save-btn').addEventListener('click', saveTextAnalysis);
+      document.getElementById('analysis-task-btn').addEventListener('click', createTaskFromAnalysis);
+      document.getElementById('analysis-copy-btn').addEventListener('click', copyAnalysisSummary);
     }
 
     function render() {
@@ -995,6 +1362,7 @@
       renderSchedule();
       renderTasks();
       renderFlashcards();
+      renderTextAnalysis();
       renderUser();
     }
 
@@ -1021,7 +1389,7 @@
       const end = document.getElementById('class-end').value;
       const color = document.getElementById('class-color').value;
       if (!name) return;
-      state.classes.push({ id: Date.now(), name, day, start, end, color });
+      state.classes.push({ id: Date.now(), name, day, start, end, color, createdAt: new Date().toISOString() });
       saveState();
       syncToFirestoreIfPossible();
       renderSchedule();
@@ -1036,7 +1404,8 @@
       const priority = document.getElementById('task-priority').value;
       const score = document.getElementById('task-score').value.trim();
       if (!name || !subject || !date) return;
-      state.tasks.push({ id: Date.now().toString(), name, subject, date, priority, type, score, completed: false });
+      state.tasks.push({ id: Date.now().toString(), name, subject, date, priority, type, score, completed: false, createdAt: new Date().toISOString() });
+      updateStudyPlanProgress();
       saveState();
       syncToFirestoreIfPossible();
       renderTasks();
@@ -1051,6 +1420,9 @@
       const task = state.tasks.find((item) => item.id == id);
       if (task) {
         task.completed = checked;
+        task.updatedAt = new Date().toISOString();
+        if (checked) task.completedAt = new Date().toISOString();
+        updateStudyPlanProgress();
         saveState();
         syncToFirestoreIfPossible();
         renderTasks();
@@ -1063,7 +1435,7 @@
       const back = document.getElementById('flash-back').value.trim();
       const subject = document.getElementById('flash-subject').value.trim();
       if (!front || !back) return;
-      state.flashcards.push({ id: Date.now().toString(), front, back, subject, mastered: false });
+      state.flashcards.push({ id: Date.now().toString(), front, back, subject, mastered: false, createdAt: new Date().toISOString() });
       saveState();
       syncToFirestoreIfPossible();
       renderFlashcards();
@@ -1080,6 +1452,8 @@
     function markFlashcard(status) {
       if (!state.flashcards.length) return;
       state.flashcards[currentFlashcardIndex].mastered = status === 'know';
+      state.flashcards[currentFlashcardIndex].lastReviewedAt = new Date().toISOString();
+      state.flashcards[currentFlashcardIndex].updatedAt = new Date().toISOString();
       saveState();
       syncToFirestoreIfPossible();
       currentFlashcardIndex = (currentFlashcardIndex + 1) % state.flashcards.length;
@@ -1134,8 +1508,18 @@
         });
         const data = await response.json();
         const result = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No se obtuvo respuesta.';
+        const summaryRecord = {
+          id: `summary-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          title: 'Resumen con IA',
+          summary: result,
+          text
+        };
+        state.aiSummaries.unshift(summaryRecord);
+        saveState();
+        syncToFirestoreIfPossible();
         document.getElementById('note-analysis').style.display = 'block';
-        document.getElementById('note-analysis').innerHTML = `<h3>Resumen con IA</h3><p>${escapeHtml(result)}</p>`;
+        document.getElementById('note-analysis').innerHTML = `<div class="timestamp-pill">🕒 ${escapeHtml(formatTimestamp(summaryRecord.createdAt))}</div><h3>Resumen con IA</h3><p>${escapeHtml(result)}</p>`;
       } catch (error) {
         console.error(error);
         alert('No se pudo conectar con Gemini. Revisa tu API key o la conexión.');
@@ -1190,6 +1574,18 @@
           const content = await page.getTextContent();
           text += content.items.map((item) => item.str).join(' ') + '\n';
         }
+        const title = file.name.replace(/\.pdf$/i, '') || 'PDF subido';
+        state.notes.unshift({
+          id: `pdf-${Date.now()}`,
+          title,
+          text: text.trim(),
+          createdAt: new Date().toISOString(),
+          keywords: [title, 'PDF'],
+          words: text.trim().split(/\s+/).filter(Boolean).length
+        });
+        saveState();
+        syncToFirestoreIfPossible();
+        document.getElementById('note-title').value = title;
         document.getElementById('note-text').value = text.trim();
         renderNotes();
       } catch (error) {
@@ -1243,10 +1639,100 @@
     function clearAllData() {
       if (!confirm('¿Seguro que quieres borrar todos los datos de esta app?')) return;
       state = JSON.parse(JSON.stringify(defaultState));
+      updateStudyPlanProgress();
       saveState();
       applyTheme();
       render();
       syncToFirestoreIfPossible();
+    }
+
+    async function saveTextAnalysis() {
+      if (!currentAnalysis) return;
+      if (!currentUser) {
+        alert('Debes iniciar sesión para guardar análisis en Firestore.');
+        return;
+      }
+      const analysis = {
+        id: currentAnalysis.id,
+        createdAt: new Date().toISOString(),
+        type: currentAnalysis.type,
+        typeLabel: currentAnalysis.typeLabel,
+        trimester: currentAnalysis.trimester,
+        subject: currentAnalysis.subject,
+        manualSubject: currentAnalysis.manualSubject,
+        summary: currentAnalysis.summary,
+        details: currentAnalysis.details,
+        text: currentAnalysis.text
+      };
+      state.textAnalyses = [analysis, ...state.textAnalyses.filter((item) => item.id !== analysis.id)];
+
+      const noteTitle = `Análisis: ${analysis.subject || 'Texto general'}`;
+      const noteContent = `${analysis.summary}\n\nTipo: ${analysis.typeLabel}\n\nTexto original:\n${analysis.text}`;
+      state.notes.unshift({
+        id: `analysis-${analysis.id}`,
+        title: noteTitle,
+        text: noteContent,
+        createdAt: new Date().toISOString(),
+        keywords: [analysis.subject || 'General', analysis.typeLabel],
+        words: noteContent.split(/\s+/).filter(Boolean).length
+      });
+
+      state.tasks.unshift({
+        id: `analysis-task-${analysis.id}`,
+        name: `Revisar: ${analysis.summary.slice(0, 40)}`,
+        subject: analysis.subject || analysis.manualSubject || 'General',
+        date: '',
+        priority: 'media',
+        type: 'tarea',
+        score: '',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        sourceAnalysisId: analysis.id
+      });
+
+      saveState();
+      await syncToFirestoreIfPossible();
+      render();
+      alert('Análisis guardado correctamente. También se creó una nota y una tarea de apoyo.');
+    }
+
+    function createTaskFromAnalysis() {
+      if (!currentAnalysis) return;
+      currentTab = 'tasks';
+      navigateTo('tasks');
+      document.getElementById('task-name').value = `Tarea sugerida: ${currentAnalysis.summary.slice(0, 40)}`;
+      document.getElementById('task-subject').value = currentAnalysis.subject || currentAnalysis.manualSubject || '';
+      document.getElementById('task-date').value = '';
+      document.getElementById('task-type').value = 'tarea';
+      document.getElementById('task-priority').value = 'media';
+      document.getElementById('task-score').value = '';
+      alert('Se abrió la sección de Tareas con los datos listos para completar.');
+    }
+
+    async function copyAnalysisSummary() {
+      if (!currentAnalysis) return;
+      try {
+        await navigator.clipboard.writeText(currentAnalysis.summary || '');
+        alert('Resumen copiado al portapapeles.');
+      } catch (error) {
+        console.error(error);
+        alert('No se pudo copiar el resumen.');
+      }
+    }
+
+    function viewAnalysis(id) {
+      const analysis = state.textAnalyses.find((item) => item.id === id);
+      if (!analysis) return;
+      currentAnalysis = analysis;
+      renderTextAnalysis();
+    }
+
+    function deleteAnalysis(id) {
+      state.textAnalyses = state.textAnalyses.filter((item) => item.id !== id);
+      saveState();
+      syncToFirestoreIfPossible();
+      if (currentAnalysis?.id === id) currentAnalysis = null;
+      renderTextAnalysis();
     }
 
     function bindEvents() {
@@ -1293,6 +1779,8 @@
     window.viewNote = viewNote;
     window.deleteNote = deleteNote;
     window.toggleTask = toggleTask;
+    window.viewAnalysis = viewAnalysis;
+    window.deleteAnalysis = deleteAnalysis;
   </script>
 </body>
 </html>
