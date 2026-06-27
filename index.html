@@ -455,13 +455,25 @@
 
       <section id="tab-notes" class="tab-panel hidden">
         <div class="card">
+          <!-- Selector trimestre / ramo -->
+          <div class="row" style="margin-bottom:12px;">
+            <div>
+              <label>Trimestre</label>
+              <select id="note-trimester" onchange="updateNoteRamoOptions()"></select>
+            </div>
+            <div>
+              <label>Ramo</label>
+              <select id="note-ramo-select"></select>
+            </div>
+          </div>
+          <!-- Toggle pegar texto / subir PDF -->
           <div class="row" style="margin-bottom:10px;">
             <button id="note-text-btn" class="pill-btn active">Pegar texto</button>
             <button id="note-pdf-btn" class="pill-btn">Subir PDF</button>
           </div>
           <div id="note-text-panel">
-            <label for="note-title">Título</label>
-            <input id="note-title" type="text" placeholder="Ej. Resumen de álgebra" />
+            <label for="note-title">Título del apunte</label>
+            <input id="note-title" type="text" placeholder="Ej. Resumen semana 1" />
             <label for="note-text">Texto</label>
             <textarea id="note-text" placeholder="Pega tus apuntes aquí..."></textarea>
             <div class="small" id="note-counter">0 caracteres · 0 palabras · 1 min lectura</div>
@@ -469,7 +481,7 @@
           <div id="note-pdf-panel" class="hidden">
             <label for="pdf-input">Archivo PDF</label>
             <input id="pdf-input" type="file" accept="application/pdf" />
-            <p class="small">Se extraerá texto con PDF.js cuando esté disponible.</p>
+            <p class="small">Se extraerá el texto del PDF automáticamente y quedará guardado en el ramo seleccionado.</p>
           </div>
           <div class="row" style="margin-top:12px;">
             <button id="analyze-note-btn" class="secondary-btn">Analizar</button>
@@ -478,8 +490,20 @@
           </div>
           <div id="note-analysis" class="card" style="margin-top:12px;display:none;"></div>
         </div>
+
+        <!-- Apuntes filtrados por ramo -->
         <div class="card">
-          <h3>Apuntes guardados</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h3 style="margin:0;">Apuntes guardados</h3>
+            <div class="row" style="gap:6px;margin:0;">
+              <select id="notes-filter-trimester" onchange="updateNotesFilterRamo()" style="font-size:0.8rem;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);">
+                <option value="all">Todos los trimestres</option>
+              </select>
+              <select id="notes-filter-ramo" onchange="renderNotes()" style="font-size:0.8rem;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);">
+                <option value="all">Todos los ramos</option>
+              </select>
+            </div>
+          </div>
           <div id="notes-list" class="list"></div>
         </div>
       </section>
@@ -489,9 +513,30 @@
           <h3>Agregar clase</h3>
           <div class="row">
             <div>
-              <label>Nombre</label>
-              <input id="class-name" type="text" placeholder="Ej. Matemática" />
+              <label>Origen del ramo</label>
+              <select id="class-source" onchange="updateClassSource()">
+                <option value="malla">Desde mi malla</option>
+                <option value="manual">Escribir manualmente</option>
+              </select>
             </div>
+          </div>
+          <div id="class-malla-selectors" class="row" style="margin-top:8px;">
+            <div>
+              <label>Trimestre</label>
+              <select id="class-trimester" onchange="updateClassRamoOptions()">
+              </select>
+            </div>
+            <div>
+              <label>Ramo</label>
+              <select id="class-ramo-select">
+              </select>
+            </div>
+          </div>
+          <div id="class-manual-input" class="hidden" style="margin-top:8px;">
+            <label>Nombre de la clase</label>
+            <input id="class-name" type="text" placeholder="Ej. Taller extracurricular" />
+          </div>
+          <div class="row" style="margin-top:8px;">
             <div>
               <label>Día</label>
               <select id="class-day">
@@ -533,10 +578,31 @@
               <label>Nombre</label>
               <input id="task-name" type="text" placeholder="Ej. Entrega informe" />
             </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div>
+              <label>Origen del ramo</label>
+              <select id="task-source" onchange="updateTaskSource()">
+                <option value="malla">Desde mi malla</option>
+                <option value="manual">Escribir manualmente</option>
+              </select>
+            </div>
+          </div>
+          <div id="task-malla-selectors" class="row" style="margin-top:8px;">
+            <div>
+              <label>Trimestre</label>
+              <select id="task-trimester" onchange="updateTaskRamoOptions()">
+              </select>
+            </div>
             <div>
               <label>Ramo</label>
-              <input id="task-subject" type="text" placeholder="Ej. Historia" />
+              <select id="task-ramo-select">
+              </select>
             </div>
+          </div>
+          <div id="task-manual-input" class="hidden" style="margin-top:8px;">
+            <label>Nombre del ramo</label>
+            <input id="task-subject" type="text" placeholder="Ej. Actividad extracurricular" />
           </div>
           <div class="row" style="margin-top:8px;">
             <div>
@@ -1370,22 +1436,32 @@
 
     function renderNotes() {
       const analysisBox = document.getElementById('note-analysis');
-      const text = document.getElementById('note-text').value;
+      const text = document.getElementById('note-text')?.value || '';
       const counter = document.getElementById('note-counter');
       const words = text.trim() ? text.trim().split(/\s+/).length : 0;
       const chars = text.length;
       const readingTime = Math.max(1, Math.ceil(words / 200));
-      counter.textContent = `${chars} caracteres · ${words} palabras · ${readingTime} min lectura`;
+      if (counter) counter.textContent = `${chars} caracteres · ${words} palabras · ${readingTime} min lectura`;
+
+      // Apply filters
+      const filterTrim = document.getElementById('notes-filter-trimester')?.value || 'all';
+      const filterRamo = document.getElementById('notes-filter-ramo')?.value || 'all';
+
+      let filtered = sortByNewest(state.notes);
+      if (filterTrim !== 'all') filtered = filtered.filter(n => n.trimester === filterTrim);
+      if (filterRamo !== 'all') filtered = filtered.filter(n => n.ramo === filterRamo);
 
       const notesList = document.getElementById('notes-list');
-      if (!state.notes.length) {
-        notesList.innerHTML = '<div class="empty">Aún no guardas apuntes.</div>';
+      if (!notesList) return;
+      if (!filtered.length) {
+        notesList.innerHTML = '<div class="empty">Sin apuntes en esta sección aún.</div>';
         return;
       }
-      notesList.innerHTML = sortByNewest(state.notes).map((note) => `
+      notesList.innerHTML = filtered.map((note) => `
         <div class="item">
           <div>
             <strong>${escapeHtml(note.title || 'Sin título')}</strong>
+            ${note.trimester ? `<div class="small" style="margin-top:2px;">📚 ${escapeHtml(note.trimester)} · ${escapeHtml(note.ramo || '')}</div>` : ''}
             ${renderTimestamp(note.createdAt)}
             <div class="tag-row" style="margin-top:6px;">${(note.keywords || []).slice(0, 5).map((k) => `<span class="tag">${escapeHtml(k)}</span>`).join('')}</div>
           </div>
@@ -1593,7 +1669,13 @@
     }
 
     function addClass() {
-      const name = document.getElementById('class-name').value.trim();
+      const source = document.getElementById('class-source')?.value || 'malla';
+      let name = '';
+      if (source === 'malla') {
+        name = document.getElementById('class-ramo-select')?.value?.trim() || '';
+      } else {
+        name = document.getElementById('class-name')?.value?.trim() || '';
+      }
       const day = document.getElementById('class-day').value;
       const start = document.getElementById('class-start').value;
       const end = document.getElementById('class-end').value;
@@ -1604,11 +1686,18 @@
       syncToFirestoreIfPossible();
       renderSchedule();
       renderHome();
+      if (source === 'manual') document.getElementById('class-name').value = '';
     }
 
     function addTask() {
       const name = document.getElementById('task-name').value.trim();
-      const subject = document.getElementById('task-subject').value.trim();
+      const source = document.getElementById('task-source')?.value || 'malla';
+      let subject = '';
+      if (source === 'malla') {
+        subject = document.getElementById('task-ramo-select')?.value?.trim() || '';
+      } else {
+        subject = document.getElementById('task-subject')?.value?.trim() || '';
+      }
       const date = document.getElementById('task-date').value;
       const type = document.getElementById('task-type').value;
       const priority = document.getElementById('task-priority').value;
@@ -1621,9 +1710,9 @@
       renderTasks();
       renderHome();
       document.getElementById('task-name').value = '';
-      document.getElementById('task-subject').value = '';
       document.getElementById('task-date').value = '';
       document.getElementById('task-score').value = '';
+      if (source === 'manual') document.getElementById('task-subject').value = '';
     }
 
     function toggleTask(id, checked) {
@@ -1741,9 +1830,11 @@
       const title = document.getElementById('note-title').value.trim() || 'Apunte sin título';
       const text = document.getElementById('note-text').value.trim();
       if (!text) return;
+      const trimester = document.getElementById('note-trimester')?.value || '';
+      const ramo = document.getElementById('note-ramo-select')?.value || '';
       const words = text.trim().split(/\s+/).length;
       const keywords = Array.from(new Set(text.toLowerCase().match(/[a-záéíóúüñ]+/gi) || [])).slice(0, 10);
-      state.notes.push({ id: Date.now().toString(), title, text, createdAt: new Date().toISOString(), keywords, words });
+      state.notes.push({ id: Date.now().toString(), title, text, trimester, ramo, createdAt: new Date().toISOString(), keywords, words });
       saveState();
       syncToFirestoreIfPossible();
       renderNotes();
@@ -1785,10 +1876,14 @@
           text += content.items.map((item) => item.str).join(' ') + '\n';
         }
         const title = file.name.replace(/\.pdf$/i, '') || 'PDF subido';
+        const trimester = document.getElementById('note-trimester')?.value || '';
+        const ramo = document.getElementById('note-ramo-select')?.value || '';
         state.notes.unshift({
           id: `pdf-${Date.now()}`,
           title,
           text: text.trim(),
+          trimester,
+          ramo,
           createdAt: new Date().toISOString(),
           keywords: [title, 'PDF'],
           words: text.trim().split(/\s+/).filter(Boolean).length
@@ -1943,6 +2038,96 @@
       syncToFirestoreIfPossible();
       if (currentAnalysis?.id === id) currentAnalysis = null;
       renderTextAnalysis();
+    }
+
+    // ── SELECTORES TRIMESTRE/RAMO ──
+    function initMallaSelectors() {
+      // Apuntes
+      const noteTrim = document.getElementById('note-trimester');
+      if (noteTrim) {
+        noteTrim.innerHTML = TRIMESTRES.map(t => `<option value="${t}">${t}</option>`).join('');
+        updateNoteRamoOptions();
+      }
+      // Filtro apuntes
+      const filterTrim = document.getElementById('notes-filter-trimester');
+      if (filterTrim) {
+        filterTrim.innerHTML = `<option value="all">Todos los trimestres</option>` +
+          TRIMESTRES.map(t => `<option value="${t}">${t}</option>`).join('');
+      }
+      // Horario
+      const classTrim = document.getElementById('class-trimester');
+      if (classTrim) {
+        classTrim.innerHTML = TRIMESTRES.map(t => `<option value="${t}">${t}</option>`).join('');
+        updateClassRamoOptions();
+      }
+      // Tareas
+      const taskTrim = document.getElementById('task-trimester');
+      if (taskTrim) {
+        taskTrim.innerHTML = TRIMESTRES.map(t => `<option value="${t}">${t}</option>`).join('');
+        updateTaskRamoOptions();
+      }
+    }
+
+    window.updateNoteRamoOptions = function() {
+      const trimester = document.getElementById('note-trimester')?.value;
+      const ramoSel = document.getElementById('note-ramo-select');
+      if (!ramoSel || !trimester) return;
+      const ramos = MALLA[trimester] || [];
+      ramoSel.innerHTML = ramos.map(r => `<option value="${escapeHtml(r.nombre)}">${escapeHtml(r.nombre)}</option>`).join('');
+    };
+
+    window.updateNotesFilterRamo = function() {
+      const trimester = document.getElementById('notes-filter-trimester')?.value;
+      const ramoSel = document.getElementById('notes-filter-ramo');
+      if (!ramoSel) return;
+      if (trimester === 'all') {
+        ramoSel.innerHTML = `<option value="all">Todos los ramos</option>`;
+      } else {
+        const ramos = MALLA[trimester] || [];
+        ramoSel.innerHTML = `<option value="all">Todos los ramos</option>` +
+          ramos.map(r => `<option value="${escapeHtml(r.nombre)}">${escapeHtml(r.nombre)}</option>`).join('');
+      }
+      renderNotes();
+    };
+
+    window.updateClassSource = function() {
+      const source = document.getElementById('class-source').value;
+      document.getElementById('class-malla-selectors').classList.toggle('hidden', source !== 'malla');
+      document.getElementById('class-manual-input').classList.toggle('hidden', source !== 'manual');
+    };
+
+    window.updateClassRamoOptions = function() {
+      const trimester = document.getElementById('class-trimester').value;
+      const ramoSel = document.getElementById('class-ramo-select');
+      if (!ramoSel) return;
+      const ramos = MALLA[trimester] || [];
+      ramoSel.innerHTML = ramos.map(r => `<option value="${escapeHtml(r.nombre)}">${escapeHtml(r.nombre)}</option>`).join('');
+    };
+
+    window.updateTaskSource = function() {
+      const source = document.getElementById('task-source').value;
+      document.getElementById('task-malla-selectors').classList.toggle('hidden', source !== 'malla');
+      document.getElementById('task-manual-input').classList.toggle('hidden', source !== 'manual');
+    };
+
+    window.updateTaskRamoOptions = function() {
+      const trimester = document.getElementById('task-trimester').value;
+      const ramoSel = document.getElementById('task-ramo-select');
+      if (!ramoSel) return;
+      const ramos = MALLA[trimester] || [];
+      ramoSel.innerHTML = ramos.map(r => `<option value="${escapeHtml(r.nombre)}">${escapeHtml(r.nombre)}</option>`).join('');
+    };
+
+    // ── LIMPIAR DATOS DE EJEMPLO ──
+    function cleanExampleData() {
+      const exampleNames = ['Matemática', 'Historia'];
+      const hadExample = state.classes.some(c => exampleNames.includes(c.name));
+      if (hadExample) {
+        state.classes = state.classes.filter(c => !exampleNames.includes(c.name));
+        state.tasks = state.tasks.filter(t => !exampleNames.includes(t.subject));
+        saveState();
+        syncToFirestoreIfPossible();
+      }
     }
 
     // ── PLAN DE ESTUDIO ──
@@ -2287,6 +2472,8 @@ Donde "correct" es el índice (0-3) de la opción correcta.`;
       bindEvents();
       initPwa();
       await initFirebase();
+      cleanExampleData();
+      initMallaSelectors();
       render();
       navigateTo('home');
       setSyncStatus(navigator.onLine ? 'synced' : 'offline');
