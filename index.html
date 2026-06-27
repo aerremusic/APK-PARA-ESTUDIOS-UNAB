@@ -272,6 +272,22 @@
       background: #fdf0f2;
     }
 
+    .update-banner {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, var(--accent-3), var(--surface));
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    .update-banner .secondary-btn { padding: 6px 10px; }
+
     .empty { padding: 16px; text-align: center; color: var(--muted); border: 1px dashed var(--border); border-radius: 14px; }
     .small { font-size: 0.85rem; color: var(--muted); }
     .danger { color: var(--danger); }
@@ -310,6 +326,10 @@
   </style>
 </head>
 <body>
+  <div id="update-banner" class="update-banner hidden" role="status" aria-live="polite">
+    <span>Nueva versión disponible</span>
+    <button id="update-app-btn" class="secondary-btn">Actualizar</button>
+  </div>
   <div id="login-screen" class="login-screen">
     <div class="login-card">
       <div style="text-align:center; margin-bottom: 20px;">
@@ -673,6 +693,9 @@
     let lastSavedAt = null;
     let firebaseReady = false;
     let currentAnalysis = null;
+    let serviceWorkerRegistration = null;
+    let updateBannerEl = null;
+    let updateAppBtn = null;
 
     const loginScreen = document.getElementById('login-screen');
     const appShell = document.getElementById('app-shell');
@@ -922,7 +945,39 @@
       return sections.join('');
     }
 
+    function showUpdateBanner() {
+      if (!updateBannerEl) return;
+      updateBannerEl.classList.remove('hidden');
+    }
+
+    function hideUpdateBanner() {
+      if (!updateBannerEl) return;
+      updateBannerEl.classList.add('hidden');
+    }
+
+    async function checkForServiceWorkerUpdates() {
+      if (!('serviceWorker' in navigator) || !serviceWorkerRegistration) return;
+      try {
+        await serviceWorkerRegistration.update();
+      } catch (error) {
+        console.warn('No se pudo verificar la actualización del service worker', error);
+      }
+    }
+
     function initPwa() {
+      updateBannerEl = document.getElementById('update-banner');
+      updateAppBtn = document.getElementById('update-app-btn');
+      if (updateAppBtn) {
+        updateAppBtn.addEventListener('click', async () => {
+          if (!serviceWorkerRegistration?.waiting) {
+            window.location.reload();
+            return;
+          }
+          serviceWorkerRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          hideUpdateBanner();
+        });
+      }
+
       const manifest = {
         name: 'StudyMe',
         short_name: 'StudyMe',
@@ -938,9 +993,28 @@
       document.getElementById('pwa-manifest').setAttribute('href', 'data:application/json,' + encodeURIComponent(JSON.stringify(manifest)));
 
       if ('serviceWorker' in navigator) {
-        const swCode = `self.addEventListener('install', event => event.waitUntil(caches.open('studymeme-v1').then(cache => cache.addAll(['./','./logo.png'])))); self.addEventListener('fetch', event => { event.respondWith(caches.match(event.request).then(res => res || fetch(event.request).catch(() => caches.match('./')))); });`;
+        const swCode = `const CACHE_NAME = 'studymeme-v2'; const APP_SHELL = ['./','./index.html','./logo.png']; self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())); }); self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))).then(() => self.clients.claim())); }); self.addEventListener('fetch', event => { if (event.request.method !== 'GET') return; event.respondWith(fetch(event.request).then(response => { const copy = response.clone(); caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)); return response; }).catch(() => caches.match(event.request).then(cached => cached || caches.match('./')))); }); self.addEventListener('message', event => { if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting(); });`;
         const blob = new Blob([swCode], { type: 'text/javascript' });
-        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+        navigator.serviceWorker.register(URL.createObjectURL(blob), { scope: './' })
+          .then((registration) => {
+            serviceWorkerRegistration = registration;
+            if (registration.waiting) showUpdateBanner();
+            registration.addEventListener('updatefound', () => {
+              const installingWorker = registration.installing;
+              if (!installingWorker) return;
+              installingWorker.addEventListener('statechange', () => {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showUpdateBanner();
+                }
+              });
+            });
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              window.location.reload();
+            });
+            checkForServiceWorkerUpdates();
+            setInterval(checkForServiceWorkerUpdates, 60000);
+          })
+          .catch(() => {});
       }
 
       let deferredPrompt = null;
