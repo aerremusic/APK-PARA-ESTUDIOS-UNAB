@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyMe</title>
+  <meta name="theme-color" content="#a78bfa" />
+  <link rel="manifest" id="pwa-manifest" />
+  <link rel="icon" href="./logo.png" />
+  <style>
+    :root {
+      --bg: #f5f0eb;
+      --surface: #fffdf9;
+      --surface-2: #f8f2eb;
+      --border: #e2d9cf;
+      --text: #3d3530;
+      --muted: #7f7468;
+      --accent: #a78bfa;
+      --accent-2: #c4b5f5;
+      --accent-3: #f3dad3;
+      --success: #65a67b;
+      --danger: #d36f75;
+      --warning: #e2b34a;
+      --radius: 18px;
+      --shadow: 0 12px 30px rgba(61, 53, 48, 0.08);
+    }
+
+    body.dark {
+      --bg: #18141b;
+      --surface: #221c26;
+      --surface-2: #2d2432;
+      --border: #4a3d53;
+      --text: #f8efe6;
+      --muted: #b8a7b0;
+      --accent: #c7b1ff;
+      --accent-2: #a78bfa;
+      --accent-3: #4f3b59;
+      --success: #7dc29a;
+      --danger: #e68b96;
+      --warning: #f1c76a;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    img { max-width: 100%; display: block; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .hidden { display: none !important; }
+
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 88px;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand img { width: 38px; height: 38px; border-radius: 12px; }
+    .brand h1 { font-size: 1rem; margin: 0; }
+    .brand small { color: var(--muted); display: block; }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .chip, .status-pill {
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-pill.synced { color: var(--success); }
+    .status-pill.syncing { color: var(--warning); }
+    .status-pill.offline { color: var(--danger); }
+
+    .icon-btn, .pill-btn, .primary-btn, .secondary-btn {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: var(--surface);
+      color: var(--text);
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+    .icon-btn:hover, .pill-btn:hover, .primary-btn:hover, .secondary-btn:hover { transform: translateY(-1px); }
+    .primary-btn { background: var(--accent); color: white; border-color: var(--accent); }
+    .primary-btn.loading {
+      background: linear-gradient(90deg, var(--accent), #8b5cf6);
+      opacity: 0.9;
+      cursor: wait;
+      box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.18);
+    }
+    .secondary-btn { background: transparent; }
+
+    .content { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .card h2, .card h3 { margin: 0 0 10px; font-size: 1rem; }
+    .card p { color: var(--muted); line-height: 1.5; margin: 0 0 8px; }
+
+    .nav-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 8px 6px 10px;
+      gap: 6px;
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.06);
+    }
+    .nav-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 2px;
+      border-radius: 12px;
+      font-size: 0.77rem;
+    }
+    .nav-btn.active { background: var(--surface-2); color: var(--text); font-weight: 600; }
+
+    .grid { display: grid; gap: 12px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-4 { grid-template-columns: 1fr; }
+
+    .stat { padding: 12px 14px; border-radius: 14px; background: linear-gradient(135deg, var(--surface-2), var(--surface)); border: 1px solid var(--border); }
+    .stat strong { display: block; font-size: 1.2rem; margin-bottom: 4px; }
+
+    .progress-track {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .progress-bar { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .item {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: var(--surface-2);
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 10px;
+    }
+    .item strong { display: block; margin-bottom: 4px; }
+    .item small { color: var(--muted); }
+    .pill { border-radius: 999px; padding: 4px 8px; font-size: 0.75rem; display: inline-block; }
+    .pill.high { background: #fbe3e6; color: var(--danger); }
+    .pill.medium { background: #fdf2d8; color: #9f6b15; }
+    .pill.low { background: #eaf6eb; color: var(--success); }
+
+    textarea, input[type="text"], input[type="date"], input[type="time"], select {
+      width: 100%; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 12px; padding: 10px 12px; outline: none;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    label { display: block; font-size: 0.9rem; margin: 8px 0 6px; color: var(--muted); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .row > * { flex: 1; min-width: 120px; }
+
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; }
+    .switch { position: relative; width: 48px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0; background: var(--border); border-radius: 999px; cursor: pointer; transition: 0.2s ease;
+    }
+    .slider::before {
+      content: ""; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.2s ease;
+    }
+    .switch input:checked + .slider { background: var(--accent); }
+    .switch input:checked + .slider::before { transform: translateX(20px); }
+
+    .flashcard {
+      min-height: 220px; border-radius: 22px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(135deg, var(--accent-3), var(--surface)); border: 1px solid var(--border);
+    }
+    .flashcard .label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .flashcard .content { font-size: 1.05rem; line-height: 1.5; padding: 0; }
+    .study-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.25); display: grid; place-items: center; padding: 16px; z-index: 50;
+    }
+    .modal {
+      width: min(560px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 18px; box-shadow: var(--shadow);
+    }
+    .modal h3 { margin-top: 0; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+    .login-screen {
+      min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(circle at top, var(--accent-3), var(--bg));
+    }
+    .login-card { width: min(420px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; box-shadow: var(--shadow); }
+    .login-card img { width: 64px; height: 64px; margin-bottom: 10px; }
+    .login-card h2 { margin: 0 0 8px; }
+    .login-card p { color: var(--muted); line-height: 1.5; }
+    .login-message {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.92rem;
+      text-align: center;
+    }
+    .login-message.error {
+      color: var(--danger);
+      border-color: #f1c8ce;
+      background: #fdf0f2;
+    }
+
+    .empty { padding: 16px; text-align: center; color: var(--muted); border: 1px dashed var(--border); border-radius: 14px; }
+    .small { font-size: 0.85rem; color: var(--muted); }
+    .danger { color: var(--danger); }
+    .success { color: var(--success); }
+
+    .calendar-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+    }
+    .calendar-day {
+      padding: 8px; min-height: 72px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); font-size: 0.8rem;
+    }
+    .calendar-day.active { outline: 2px solid var(--accent); }
+    .calendar-day .day-num { font-weight: 600; margin-bottom: 4px; }
+    .calendar-day .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+    @media (min-width: 720px) {
+      .content { padding: 24px; gap: 18px; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+      .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+      .header { padding: 16px 24px; }
+      .nav-bottom { left: 50%; transform: translateX(-50%); width: min(720px, 100%); border-radius: 18px 18px 0 0; border: 1px solid var(--border); border-bottom: none; }
+      .app-shell { padding-bottom: 96px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div style="text-align:center; margin-bottom: 20px;">
+        <img src="./logo.png" alt="StudyMe" style="width:100px; height:100px; border-radius:20px;">
+      </div>
+      <h2>StudyMe</h2>
+      <p>Tu espacio para apuntes, tareas, horario y flashcards. Inicia sesión para guardar todo en la nube y seguir estudiando sin perder progreso.</p>
+      <div style="margin-top:16px;display:flex;justify-content:center;">
+        <button id="login-btn" class="primary-btn">Entrar con Google</button>
+      </div>
+      <div id="login-message" class="login-message" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div id="app-shell" class="app-shell hidden">
+    <header class="header">
+      <div class="brand">
+        <img src="./logo.png" alt="StudyMe" />
+        <div>
+          <h1>StudyMe</h1>
+          <small id="user-subtitle">Organiza tu estudio</small>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span id="sync-status" class="status-pill synced">🟢 Sincronizado</span>
+        <button id="theme-toggle" class="icon-btn" title="Cambiar tema">🌙</button>
+        <button id="settings-btn" class="icon-btn" title="Configuración">⚙️</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <section id="tab-home" class="tab-panel">
+        <div class="card">
+          <h2>Hola, <span id="user-name">Estudiante</span> 👋</h2>
+          <p id="home-date"></p>
+        </div>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Horario de hoy</h3>
+            <div id="today-schedule" class="list"></div>
+          </div>
+          <div class="card">
+            <h3>Próximas evaluaciones</h3>
+            <div id="upcoming-evals" class="list"></div>
+          </div>
+        </div>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Tareas pendientes</h3>
+            <strong id="pending-count">0</strong>
+            <p>Tu lista de tareas sigue activa.</p>
+          </div>
+          <div class="card">
+            <h3>Progreso semanal</h3>
+            <div id="weekly-progress-label">0%</div>
+            <div class="progress-track"><div id="weekly-progress-bar" class="progress-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-notes" class="tab-panel hidden">
+        <div class="card">
+          <div class="row" style="margin-bottom:10px;">
+            <button id="note-text-btn" class="pill-btn active">Pegar texto</button>
+            <button id="note-pdf-btn" class="pill-btn">Subir PDF</button>
+          </div>
+          <div id="note-text-panel">
+            <label for="note-title">Título</label>
+            <input id="note-title" type="text" placeholder="Ej. Resumen de álgebra" />
+            <label for="note-text">Texto</label>
+            <textarea id="note-text" placeholder="Pega tus apuntes aquí..."></textarea>
+            <div class="small" id="note-counter">0 caracteres · 0 palabras · 1 min lectura</div>
+          </div>
+          <div id="note-pdf-panel" class="hidden">
+            <label for="pdf-input">Archivo PDF</label>
+            <input id="pdf-input" type="file" accept="application/pdf" />
+            <p class="small">Se extraerá texto con PDF.js cuando esté disponible.</p>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <button id="analyze-note-btn" class="secondary-btn">Analizar</button>
+            <button id="summarize-note-btn" class="secondary-btn">Resumir con IA</button>
+            <button id="save-note-btn" class="primary-btn">Guardar apunte</button>
+          </div>
+          <div id="note-analysis" class="card" style="margin-top:12px;display:none;"></div>
+        </div>
+        <div class="card">
+          <h3>Apuntes guardados</h3>
+          <div id="notes-list" class="list"></div>
+        </div>
+      </section>
+
+      <section id="tab-schedule" class="tab-panel hidden">
+        <div class="card">
+          <h3>Agregar clase</h3>
+          <div class="row">
+            <div>
+              <label>Nombre</label>
+              <input id="class-name" type="text" placeholder="Ej. Matemática" />
+            </div>
+            <div>
+              <label>Día</label>
+              <select id="class-day">
+                <option>Lunes</option><option>Martes</option><option>Miércoles</option><option>Jueves</option><option>Viernes</option><option>Sábado</option>
+              </select>
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div>
+              <label>Inicio</label>
+              <input id="class-start" type="time" value="08:00" />
+            </div>
+            <div>
+              <label>Fin</label>
+              <input id="class-end" type="time" value="09:30" />
+            </div>
+            <div>
+              <label>Color</label>
+              <input id="class-color" type="color" value="#a78bfa" />
+            </div>
+          </div>
+          <div style="margin-top:12px;"><button id="add-class-btn" class="primary-btn">Agregar clase</button></div>
+        </div>
+        <div class="card">
+          <h3>Calendario mensual</h3>
+          <div id="calendar-grid" class="calendar-grid"></div>
+        </div>
+        <div class="card">
+          <h3>Clases semanales</h3>
+          <div id="weekly-classes" class="list"></div>
+        </div>
+      </section>
+
+      <section id="tab-tasks" class="tab-panel hidden">
+        <div class="card">
+          <h3>Agregar tarea o evaluación</h3>
+          <div class="row">
+            <div>
+              <label>Nombre</label>
+              <input id="task-name" type="text" placeholder="Ej. Entrega informe" />
+            </div>
+            <div>
+              <label>Ramo</label>
+              <input id="task-subject" type="text" placeholder="Ej. Historia" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div>
+              <label>Fecha</label>
+              <input id="task-date" type="date" />
+            </div>
+            <div>
+              <label>Tipo</label>
+              <select id="task-type">
+                <option value="tarea">Tarea</option>
+                <option value="evaluacion">Evaluación</option>
+              </select>
+            </div>
+            <div>
+              <label>Prioridad</label>
+              <select id="task-priority">
+                <option value="alta">Alta</option>
+                <option value="media">Media</option>
+                <option value="baja">Baja</option>
+              </select>
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div>
+              <label>Nota / porcentaje</label>
+              <input id="task-score" type="text" placeholder="Ej. 20%" />
+            </div>
+            <div style="display:flex;align-items:end;">
+              <button id="add-task-btn" class="primary-btn">Guardar</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Tareas pendientes</h3>
+          <div id="pending-tasks" class="list"></div>
+        </div>
+        <div class="card">
+          <h3>Evaluaciones</h3>
+          <div id="evaluations-list" class="list"></div>
+        </div>
+      </section>
+
+      <section id="tab-flashcards" class="tab-panel hidden">
+        <div class="card">
+          <h3>Crear flashcard</h3>
+          <div class="row">
+            <div>
+              <label>Frente</label>
+              <input id="flash-front" type="text" placeholder="Concepto" />
+            </div>
+            <div>
+              <label>Reverso</label>
+              <input id="flash-back" type="text" placeholder="Definición" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div>
+              <label>Ramo</label>
+              <input id="flash-subject" type="text" placeholder="Ej. Química" />
+            </div>
+            <div style="display:flex;align-items:end;">
+              <button id="add-flash-btn" class="primary-btn">Agregar</button>
+            </div>
+          </div>
+          <div style="margin-top:12px;"><button id="generate-flash-btn" class="secondary-btn">Generar con IA</button></div>
+        </div>
+        <div class="card">
+          <h3>Modo estudio</h3>
+          <div id="flashcard-display" class="flashcard">
+            <div>
+              <div class="label">Frente</div>
+              <div id="flash-front-view" class="content">No hay tarjetas aún.</div>
+            </div>
+            <div>
+              <div class="small" id="flash-meta">0 / 0</div>
+              <div class="study-actions">
+                <button id="flip-flash-btn" class="secondary-btn">Voltear</button>
+                <button id="know-flash-btn" class="primary-btn">Lo sé</button>
+                <button id="review-flash-btn" class="secondary-btn">Repasar</button>
+              </div>
+            </div>
+          </div>
+          <div class="small" style="margin-top:10px;" id="flash-progress">0 dominadas · 0 pendientes</div>
+        </div>
+        <div class="card">
+          <h3>Tarjetas guardadas</h3>
+          <div id="flashcards-list" class="list"></div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="nav-bottom" aria-label="Navegación principal">
+      <button class="nav-btn active" data-tab="home">🏠<span>Inicio</span></button>
+      <button class="nav-btn" data-tab="notes">📚<span>Apuntes</span></button>
+      <button class="nav-btn" data-tab="schedule">🗓️<span>Horario</span></button>
+      <button class="nav-btn" data-tab="tasks">📋<span>Tareas</span></button>
+      <button class="nav-btn" data-tab="flashcards">🃏<span>Flashcards</span></button>
+    </nav>
+  </div>
+
+  <div id="settings-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3>Configuración</h3>
+      <div class="toggle-row">
+        <span>Modo oscuro</span>
+        <label class="switch">
+          <input id="settings-dark-toggle" type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <label for="gemini-key-input">API key de Gemini</label>
+      <input id="gemini-key-input" type="text" placeholder="Pega tu clave aquí" />
+      <div class="modal-actions">
+        <button id="save-settings-btn" class="primary-btn">Guardar</button>
+        <button id="clear-data-btn" class="secondary-btn">Borrar todo</button>
+        <button id="logout-btn" class="secondary-btn danger">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.min.js"></script>
+  <script>
+    const STORAGE_KEY = 'studymeme-state-v1';
+    const THEME_KEY = 'studymeme-theme';
+    const USER_COLLECTION = 'users';
+    const defaultState = {
+      profile: { displayName: 'Estudiante', photoURL: '' },
+      settings: { darkMode: false, geminiKey: '' },
+      notes: [],
+      classes: [
+        { id: 1, name: 'Matemática', day: 'Lunes', start: '08:00', end: '09:30', color: '#a78bfa' },
+        { id: 2, name: 'Historia', day: 'Miércoles', start: '10:00', end: '11:30', color: '#f3dad3' }
+      ],
+      tasks: [
+        { id: 1, name: 'Entrega informe', subject: 'Historia', date: '2026-06-30', priority: 'alta', type: 'tarea', score: '20%', completed: false },
+        { id: 2, name: 'Prueba de álgebra', subject: 'Matemática', date: '2026-07-02', priority: 'media', type: 'evaluacion', score: '30%', completed: false }
+      ],
+      flashcards: []
+    };
+
+    let state = loadState();
+    let currentTab = 'home';
+    let noteMode = 'text';
+    let currentFlashcardIndex = 0;
+    let flashcardShowingBack = false;
+    let firebaseApp = null;
+    let firebaseAuth = null;
+    let fireStore = null;
+    let currentUser = null;
+    let unsubscribeDoc = null;
+    let syncState = 'synced';
+    let lastSavedAt = null;
+    let firebaseReady = false;
+
+    const loginScreen = document.getElementById('login-screen');
+    const appShell = document.getElementById('app-shell');
+    const loginBtn = document.getElementById('login-btn');
+    const loginMessage = document.getElementById('login-message');
+    const themeToggle = document.getElementById('theme-toggle');
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    const clearDataBtn = document.getElementById('clear-data-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const syncStatusEl = document.getElementById('sync-status');
+
+    setLoginButtonLoading(true);
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return { ...defaultState, ...parsed, settings: { ...defaultState.settings, ...(parsed.settings || {}) }, profile: { ...defaultState.profile, ...(parsed.profile || {}) } };
+        }
+      } catch (error) {
+        console.warn('No se pudo cargar el estado local', error);
+      }
+      return JSON.parse(JSON.stringify(defaultState));
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      lastSavedAt = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function applyTheme() {
+      document.body.classList.toggle('dark', state.settings.darkMode);
+      themeToggle.textContent = state.settings.darkMode ? '☀️' : '🌙';
+      const darkToggle = document.getElementById('settings-dark-toggle');
+      if (darkToggle) darkToggle.checked = state.settings.darkMode;
+      localStorage.setItem(THEME_KEY, state.settings.darkMode ? 'dark' : 'light');
+    }
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      if (savedTheme === 'dark') state.settings.darkMode = true;
+      applyTheme();
+    }
+
+    function setSyncStatus(status) {
+      syncState = status;
+      if (status === 'synced') {
+        syncStatusEl.className = 'status-pill synced';
+        syncStatusEl.textContent = '🟢 Sincronizado';
+      } else if (status === 'syncing') {
+        syncStatusEl.className = 'status-pill syncing';
+        syncStatusEl.textContent = '🟡 Sincronizando...';
+      } else {
+        syncStatusEl.className = 'status-pill offline';
+        syncStatusEl.textContent = '🔴 Sin conexión';
+      }
+    }
+
+    function showLoginMessage(message, isError = false) {
+      if (!loginMessage) return;
+      loginMessage.textContent = message;
+      loginMessage.classList.toggle('error', isError);
+    }
+
+    function clearLoginMessage() {
+      if (!loginMessage) return;
+      loginMessage.textContent = '';
+      loginMessage.classList.remove('error');
+    }
+
+    function setLoginButtonLoading(isLoading) {
+      if (!loginBtn) return;
+      loginBtn.disabled = isLoading;
+      loginBtn.classList.toggle('loading', isLoading);
+      loginBtn.textContent = isLoading ? 'Cargando...' : 'Entrar con Google';
+    }
+
+    function initPwa() {
+      const manifest = {
+        name: 'StudyMe',
+        short_name: 'StudyMe',
+        start_url: './',
+        display: 'standalone',
+        background_color: '#f5f0eb',
+        theme_color: '#a78bfa',
+        icons: [
+          { src: './logo.png', sizes: '192x192', type: 'image/png' },
+          { src: './logo.png', sizes: '512x512', type: 'image/png' }
+        ]
+      };
+      document.getElementById('pwa-manifest').setAttribute('href', 'data:application/json,' + encodeURIComponent(JSON.stringify(manifest)));
+
+      if ('serviceWorker' in navigator) {
+        const swCode = `self.addEventListener('install', event => event.waitUntil(caches.open('studymeme-v1').then(cache => cache.addAll(['./','./logo.png'])))); self.addEventListener('fetch', event => { event.respondWith(caches.match(event.request).then(res => res || fetch(event.request).catch(() => caches.match('./')))); });`;
+        const blob = new Blob([swCode], { type: 'text/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+      }
+
+      let deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        deferredPrompt = event;
+        const installBtn = document.createElement('button');
+        installBtn.className = 'primary-btn';
+        installBtn.textContent = 'Instalar app';
+        installBtn.style.position = 'fixed';
+        installBtn.style.bottom = '100px';
+        installBtn.style.right = '16px';
+        installBtn.style.zIndex = '40';
+        installBtn.addEventListener('click', async () => {
+          if (!deferredPrompt) return;
+          deferredPrompt.prompt();
+          await deferredPrompt.userChoice;
+          installBtn.remove();
+        });
+        document.body.appendChild(installBtn);
+      });
+    }
+
+    async function initFirebase() {
+      const firebaseConfig = {
+        apiKey: "AIzaSyAAsuIHigdzUr-Sd6TY5atbOPmFIq_31b8",
+        authDomain: "apk-estudio-unab.firebaseapp.com",
+        projectId: "apk-estudio-unab",
+        storageBucket: "apk-estudio-unab.firebasestorage.app",
+        messagingSenderId: "387461458461",
+        appId: "1:387461458461:web:d5ba2ec384df82481a34f4"
+      };
+
+      try {
+        console.log('Iniciando inicialización de Firebase...');
+        firebaseApp = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(firebaseConfig);
+        firebaseAuth = firebase.auth();
+        fireStore = firebase.firestore();
+        firebaseReady = true;
+        setLoginButtonLoading(false);
+        window.addEventListener('online', syncToFirestoreIfPossible);
+        window.addEventListener('offline', () => setSyncStatus('offline'));
+
+        firebaseAuth.onAuthStateChanged((user) => {
+          currentUser = user;
+          if (user) {
+            console.log('Usuario logueado:', user.displayName);
+            clearLoginMessage();
+            loginScreen.classList.add('hidden');
+            appShell.classList.remove('hidden');
+            state.profile.displayName = user.displayName || state.profile.displayName;
+            state.profile.photoURL = user.photoURL || '';
+            saveState();
+            renderUser();
+            subscribeToUserDoc(user.uid);
+            syncToFirestoreIfPossible();
+          } else {
+            console.log('Usuario no logueado');
+            appShell.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+          }
+        });
+      } catch (error) {
+        firebaseReady = false;
+        setLoginButtonLoading(false);
+        console.warn('Firebase no disponible, usando modo local.', error);
+        showLoginMessage(`No fue posible conectar con Firebase (${error.code || 'unknown'}): ${error.message || 'Sin detalles'}`, true);
+        setSyncStatus('offline');
+      }
+    }
+
+    function loginWithGoogle() {
+      if (!firebaseReady || !firebaseAuth) {
+        console.warn('Firebase no está listo aún.');
+        showLoginMessage('Firebase aún no está listo. Intenta de nuevo en unos segundos.', true);
+        setSyncStatus('offline');
+        return;
+      }
+
+      const provider = new firebase.auth.GoogleAuthProvider();
+      setLoginButtonLoading(true);
+      clearLoginMessage();
+
+      firebaseAuth.signInWithPopup(provider)
+        .then((result) => {
+          console.log('Login exitoso:', result.user.displayName);
+          setLoginButtonLoading(false);
+        })
+        .catch((error) => {
+          console.error('Error login:', error.code, error.message);
+          setLoginButtonLoading(false);
+          showLoginMessage(`Error: ${error.message}`, true);
+          alert('Error: ' + error.message);
+        });
+    }
+
+    function subscribeToUserDoc(uid) {
+      if (unsubscribeDoc) unsubscribeDoc();
+      if (!firebaseReady || !fireStore) {
+        console.warn('Firestore no está listo aún.');
+        return;
+      }
+      unsubscribeDoc = fireStore.collection(USER_COLLECTION).doc(uid).onSnapshot((doc) => {
+        if (!doc.exists) return;
+        const data = doc.data() || {};
+        if (data.profile) state.profile = { ...state.profile, ...data.profile };
+        if (data.settings) state.settings = { ...state.settings, ...data.settings };
+        if (data.notes) state.notes = data.notes;
+        if (data.classes) state.classes = data.classes;
+        if (data.tasks) state.tasks = data.tasks;
+        if (data.flashcards) state.flashcards = data.flashcards;
+        saveState();
+        applyTheme();
+        render();
+        setSyncStatus('synced');
+      }, () => setSyncStatus('offline'));
+    }
+
+    async function syncToFirestoreIfPossible() {
+      if (!firebaseReady || !currentUser || !fireStore || !navigator.onLine) {
+        setSyncStatus(navigator.onLine ? 'synced' : 'offline');
+        return;
+      }
+      setSyncStatus('syncing');
+      try {
+        await fireStore.collection(USER_COLLECTION).doc(currentUser.uid).set({
+          profile: state.profile,
+          settings: state.settings,
+          notes: state.notes,
+          classes: state.classes,
+          tasks: state.tasks,
+          flashcards: state.flashcards
+        }, { merge: true });
+        setSyncStatus('synced');
+      } catch (error) {
+        console.warn('No se pudo sincronizar con Firestore', error);
+        setSyncStatus('offline');
+      }
+    }
+
+    function signOut() {
+      if (firebaseAuth) firebaseAuth.signOut().catch(() => {});
+      state = JSON.parse(JSON.stringify(defaultState));
+      saveState();
+      applyTheme();
+      render();
+    }
+
+    function renderUser() {
+      document.getElementById('user-name').textContent = state.profile.displayName || 'Estudiante';
+      document.getElementById('user-subtitle').textContent = state.profile.displayName ? 'Estudiando con StudyMe' : 'Organiza tu estudio';
+      const brandImage = document.querySelector('.brand img');
+      if (brandImage) {
+        brandImage.src = './logo.png';
+        brandImage.alt = 'StudyMe';
+      }
+    }
+
+    function navigateTo(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.add('hidden'));
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      document.querySelectorAll('.nav-btn').forEach((btn) => btn.classList.toggle('active', btn.getAttribute('data-tab') === tab));
+      if (tab === 'home') renderHome();
+      if (tab === 'notes') renderNotes();
+      if (tab === 'schedule') renderSchedule();
+      if (tab === 'tasks') renderTasks();
+      if (tab === 'flashcards') renderFlashcards();
+    }
+
+    function renderHome() {
+      const now = new Date();
+      document.getElementById('home-date').textContent = now.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('user-name').textContent = state.profile.displayName || 'Estudiante';
+      const todayClasses = state.classes.filter((c) => c.day === getDayName(now.getDay()));
+      const todaySchedule = document.getElementById('today-schedule');
+      if (todayClasses.length) {
+        todaySchedule.innerHTML = todayClasses.map((c) => `<div class="item"><div><strong>${c.name}</strong><small>${c.start} - ${c.end}</small></div><span class="tag" style="background:${c.color}22;color:${c.color}">${c.day}</span></div>`).join('');
+      } else {
+        todaySchedule.innerHTML = '<div class="empty">Sin clases hoy. Aprovecha para repasar.</div>';
+      }
+
+      const upcoming = state.tasks.filter((t) => !t.completed && t.type === 'evaluacion').sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+      const evalsEl = document.getElementById('upcoming-evals');
+      if (upcoming.length) {
+        evalsEl.innerHTML = upcoming.map((item) => `<div class="item"><div><strong>${item.name}</strong><small>${item.subject} · ${formatDate(item.date)}</small></div><span class="pill ${item.priority}">${item.priority}</span></div>`).join('');
+      } else {
+        evalsEl.innerHTML = '<div class="empty">No hay evaluaciones próximas.</div>';
+      }
+
+      const pending = state.tasks.filter((t) => !t.completed);
+      document.getElementById('pending-count').textContent = pending.length;
+      const completedCount = state.tasks.filter((t) => t.completed).length;
+      const progress = state.tasks.length ? Math.round((completedCount / state.tasks.length) * 100) : 0;
+      document.getElementById('weekly-progress-label').textContent = `${progress}%`;
+      document.getElementById('weekly-progress-bar').style.width = `${progress}%`;
+    }
+
+    function renderNotes() {
+      const analysisBox = document.getElementById('note-analysis');
+      const text = document.getElementById('note-text').value;
+      const counter = document.getElementById('note-counter');
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      const chars = text.length;
+      const readingTime = Math.max(1, Math.ceil(words / 200));
+      counter.textContent = `${chars} caracteres · ${words} palabras · ${readingTime} min lectura`;
+
+      const notesList = document.getElementById('notes-list');
+      if (!state.notes.length) {
+        notesList.innerHTML = '<div class="empty">Aún no guardas apuntes.</div>';
+        return;
+      }
+      notesList.innerHTML = state.notes.slice().reverse().map((note) => `
+        <div class="item">
+          <div>
+            <strong>${escapeHtml(note.title || 'Sin título')}</strong>
+            <small>${formatDate(note.createdAt)}</small>
+            <div class="tag-row" style="margin-top:6px;">${(note.keywords || []).slice(0, 5).map((k) => `<span class="tag">${escapeHtml(k)}</span>`).join('')}</div>
+          </div>
+          <div class="row">
+            <button class="secondary-btn" onclick="viewNote('${note.id}')">Ver</button>
+            <button class="secondary-btn danger" onclick="deleteNote('${note.id}')">Eliminar</button>
+          </div>
+        </div>`).join('');
+    }
+
+    function renderSchedule() {
+      const calendarGrid = document.getElementById('calendar-grid');
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+      const totalCells = Math.ceil((startOffset + lastDay.getDate()) / 7) * 7;
+      const cells = [];
+      for (let i = 0; i < totalCells; i += 1) {
+        const date = new Date(year, month, i - startOffset + 1);
+        const isCurrentMonth = date.getMonth() === month;
+        const isToday = date.toDateString() === today.toDateString();
+        const items = state.classes.filter((c) => c.day === getDayName(date.getDay()));
+        cells.push(`<div class="calendar-day ${isToday ? 'active' : ''}" style="opacity:${isCurrentMonth ? 1 : 0.45}"><div class="day-num">${date.getDate()}</div>${items.slice(0, 2).map((c) => `<div><span class="dot" style="background:${c.color}"></span>${c.name}</div>`).join('')}</div>`);
+      }
+      calendarGrid.innerHTML = cells.join('');
+
+      const weeklyClasses = document.getElementById('weekly-classes');
+      weeklyClasses.innerHTML = state.classes.map((c) => `<div class="item"><div><strong>${c.name}</strong><small>${c.day} · ${c.start} - ${c.end}</small></div><span class="tag" style="background:${c.color}22;color:${c.color}">Clase</span></div>`).join('');
+    }
+
+    function renderTasks() {
+      const pendingTasksList = document.getElementById('pending-tasks');
+      const sorted = [...state.tasks].filter((t) => !t.completed).sort((a, b) => a.date.localeCompare(b.date));
+      pendingTasksList.innerHTML = sorted.length ? sorted.map((task) => `
+        <div class="item">
+          <div>
+            <strong>${escapeHtml(task.name)}</strong>
+            <small>${escapeHtml(task.subject)} · ${formatDate(task.date)} · ${task.score || ''}</small>
+          </div>
+          <div class="row">
+            <span class="pill ${task.priority}">${task.priority}</span>
+            <input type="checkbox" onchange="toggleTask('${task.id}', this.checked)" />
+          </div>
+        </div>`).join('') : '<div class="empty">Sin tareas pendientes.</div>';
+
+      const evaluationsList = document.getElementById('evaluations-list');
+      const evaluations = state.tasks.filter((t) => !t.completed && t.type === 'evaluacion').sort((a, b) => a.date.localeCompare(b.date));
+      evaluationsList.innerHTML = evaluations.length ? evaluations.map((item) => `
+        <div class="item">
+          <div>
+            <strong>${escapeHtml(item.name)}</strong>
+            <small>${escapeHtml(item.subject)} · ${formatDate(item.date)} · ${item.score}</small>
+          </div>
+          <div class="row">
+            <span class="pill medium">${item.priority}</span>
+            <input type="checkbox" onchange="toggleTask('${item.id}', this.checked)" />
+          </div>
+        </div>`).join('') : '<div class="empty">No hay evaluaciones próximas.</div>';
+    }
+
+    function renderFlashcards() {
+      const flashcards = state.flashcards;
+      document.getElementById('flash-progress').textContent = `${flashcards.filter((f) => f.mastered).length} dominadas · ${flashcards.filter((f) => !f.mastered).length} pendientes`;
+      const display = document.getElementById('flashcard-display');
+      if (!flashcards.length) {
+        document.getElementById('flash-front-view').textContent = 'No hay tarjetas aún.';
+        document.getElementById('flash-meta').textContent = '0 / 0';
+        return;
+      }
+      if (currentFlashcardIndex >= flashcards.length) currentFlashcardIndex = 0;
+      const card = flashcards[currentFlashcardIndex];
+      document.getElementById('flash-front-view').textContent = flashcardShowingBack ? card.back : card.front;
+      document.getElementById('flash-meta').textContent = `${currentFlashcardIndex + 1} / ${flashcards.length}`;
+      const list = document.getElementById('flashcards-list');
+      list.innerHTML = flashcards.map((card, index) => `
+        <div class="item">
+          <div>
+            <strong>${escapeHtml(card.front)}</strong>
+            <small>${escapeHtml(card.subject)}</small>
+          </div>
+          <span class="pill ${card.mastered ? 'low' : 'medium'}">${card.mastered ? 'Dominada' : 'Pendiente'}</span>
+        </div>`).join('');
+    }
+
+    function render() {
+      applyTheme();
+      renderHome();
+      renderNotes();
+      renderSchedule();
+      renderTasks();
+      renderFlashcards();
+      renderUser();
+    }
+
+    function getDayName(dayIndex) {
+      const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      return days[dayIndex];
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return 'Sin fecha';
+      const date = new Date(dateString);
+      if (Number.isNaN(date.getTime())) return dateString;
+      return date.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
+    }
+
+    function escapeHtml(text) {
+      return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function addClass() {
+      const name = document.getElementById('class-name').value.trim();
+      const day = document.getElementById('class-day').value;
+      const start = document.getElementById('class-start').value;
+      const end = document.getElementById('class-end').value;
+      const color = document.getElementById('class-color').value;
+      if (!name) return;
+      state.classes.push({ id: Date.now(), name, day, start, end, color });
+      saveState();
+      syncToFirestoreIfPossible();
+      renderSchedule();
+      renderHome();
+    }
+
+    function addTask() {
+      const name = document.getElementById('task-name').value.trim();
+      const subject = document.getElementById('task-subject').value.trim();
+      const date = document.getElementById('task-date').value;
+      const type = document.getElementById('task-type').value;
+      const priority = document.getElementById('task-priority').value;
+      const score = document.getElementById('task-score').value.trim();
+      if (!name || !subject || !date) return;
+      state.tasks.push({ id: Date.now().toString(), name, subject, date, priority, type, score, completed: false });
+      saveState();
+      syncToFirestoreIfPossible();
+      renderTasks();
+      renderHome();
+      document.getElementById('task-name').value = '';
+      document.getElementById('task-subject').value = '';
+      document.getElementById('task-date').value = '';
+      document.getElementById('task-score').value = '';
+    }
+
+    function toggleTask(id, checked) {
+      const task = state.tasks.find((item) => item.id == id);
+      if (task) {
+        task.completed = checked;
+        saveState();
+        syncToFirestoreIfPossible();
+        renderTasks();
+        renderHome();
+      }
+    }
+
+    function addFlashcard() {
+      const front = document.getElementById('flash-front').value.trim();
+      const back = document.getElementById('flash-back').value.trim();
+      const subject = document.getElementById('flash-subject').value.trim();
+      if (!front || !back) return;
+      state.flashcards.push({ id: Date.now().toString(), front, back, subject, mastered: false });
+      saveState();
+      syncToFirestoreIfPossible();
+      renderFlashcards();
+      document.getElementById('flash-front').value = '';
+      document.getElementById('flash-back').value = '';
+      document.getElementById('flash-subject').value = '';
+    }
+
+    function flipFlashcard() {
+      flashcardShowingBack = !flashcardShowingBack;
+      renderFlashcards();
+    }
+
+    function markFlashcard(status) {
+      if (!state.flashcards.length) return;
+      state.flashcards[currentFlashcardIndex].mastered = status === 'know';
+      saveState();
+      syncToFirestoreIfPossible();
+      currentFlashcardIndex = (currentFlashcardIndex + 1) % state.flashcards.length;
+      flashcardShowingBack = false;
+      renderFlashcards();
+    }
+
+    function setNoteMode(mode) {
+      noteMode = mode;
+      document.getElementById('note-text-panel').classList.toggle('hidden', mode !== 'text');
+      document.getElementById('note-pdf-panel').classList.toggle('hidden', mode !== 'pdf');
+      document.getElementById('note-text-btn').classList.toggle('active', mode === 'text');
+      document.getElementById('note-pdf-btn').classList.toggle('active', mode === 'pdf');
+    }
+
+    function analyzeNote() {
+      const text = document.getElementById('note-text').value.trim();
+      if (!text) return;
+      const words = text.toLowerCase().match(/[a-záéíóúüñ]+/gi) || [];
+      const stopWords = new Set(['de','la','el','y','que','para','con','una','por','del','las','los','en','al','es','su','sus','como','una','un']);
+      const freq = {};
+      words.forEach((word) => {
+        const clean = word.normalize('NFD').replace(/[^\w\s]/gi, '').toLowerCase();
+        if (clean.length > 2 && !stopWords.has(clean)) freq[clean] = (freq[clean] || 0) + 1;
+      });
+      const keywords = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([word]) => word);
+      const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 3);
+      const analysisBox = document.getElementById('note-analysis');
+      analysisBox.style.display = 'block';
+      analysisBox.innerHTML = `
+        <h3>Análisis rápido</h3>
+        <div class="tag-row">${keywords.map((k) => `<span class="tag">${escapeHtml(k)}</span>`).join('')}</div>
+        <p style="margin-top:10px;"><strong>Frases importantes</strong></p>
+        <ul>${sentences.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
+      `;
+    }
+
+    async function summarizeWithGemini() {
+      const text = document.getElementById('note-text').value.trim();
+      if (!text) return;
+      const key = state.settings.geminiKey || '';
+      if (!key) {
+        alert('Agrega tu API key en Configuración.');
+        return;
+      }
+      setSyncStatus('syncing');
+      try {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: `Resume este texto en 3 oraciones, indica temas principales, nivel de dificultad y 3 preguntas de estudio.\n\n${text}` }] }] })
+        });
+        const data = await response.json();
+        const result = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No se obtuvo respuesta.';
+        document.getElementById('note-analysis').style.display = 'block';
+        document.getElementById('note-analysis').innerHTML = `<h3>Resumen con IA</h3><p>${escapeHtml(result)}</p>`;
+      } catch (error) {
+        console.error(error);
+        alert('No se pudo conectar con Gemini. Revisa tu API key o la conexión.');
+      }
+      setSyncStatus(navigator.onLine ? 'synced' : 'offline');
+    }
+
+    function saveNote() {
+      const title = document.getElementById('note-title').value.trim() || 'Apunte sin título';
+      const text = document.getElementById('note-text').value.trim();
+      if (!text) return;
+      const words = text.trim().split(/\s+/).length;
+      const keywords = Array.from(new Set(text.toLowerCase().match(/[a-záéíóúüñ]+/gi) || [])).slice(0, 10);
+      state.notes.push({ id: Date.now().toString(), title, text, createdAt: new Date().toISOString(), keywords, words });
+      saveState();
+      syncToFirestoreIfPossible();
+      renderNotes();
+      document.getElementById('note-title').value = '';
+      document.getElementById('note-text').value = '';
+      document.getElementById('note-analysis').style.display = 'none';
+    }
+
+    function viewNote(id) {
+      const note = state.notes.find((item) => item.id === id);
+      if (!note) return;
+      document.getElementById('note-title').value = note.title;
+      document.getElementById('note-text').value = note.text;
+      navigateTo('notes');
+      renderNotes();
+    }
+
+    function deleteNote(id) {
+      state.notes = state.notes.filter((item) => item.id !== id);
+      saveState();
+      syncToFirestoreIfPossible();
+      renderNotes();
+    }
+
+    async function handlePdfUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      if (!window.pdfjsLib) {
+        alert('PDF.js no está cargado.');
+        return;
+      }
+      try {
+        const bytes = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+        let text = '';
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+          const page = await pdf.getPage(pageNumber);
+          const content = await page.getTextContent();
+          text += content.items.map((item) => item.str).join(' ') + '\n';
+        }
+        document.getElementById('note-text').value = text.trim();
+        renderNotes();
+      } catch (error) {
+        console.error(error);
+        alert('No se pudo extraer el texto del PDF.');
+      }
+    }
+
+    async function generateFlashcardsWithGemini() {
+      const topic = prompt('¿Qué tema quieres convertir en flashcards?');
+      if (!topic) return;
+      const key = state.settings.geminiKey || '';
+      if (!key) {
+        alert('Agrega tu API key en Configuración.');
+        return;
+      }
+      try {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: `Genera 5 flashcards en formato JSON con campos frente, reverso y tema para el tema: ${topic}` }] }] })
+        });
+        const data = await response.json();
+        const result = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (!result) throw new Error('Sin respuesta');
+        alert('Se generó la respuesta. Puedes adaptarla a tu lista de tarjetas.');
+        console.info(result);
+      } catch (error) {
+        console.error(error);
+        alert('No se pudo generar con Gemini.');
+      }
+    }
+
+    function openSettings() {
+      document.getElementById('gemini-key-input').value = state.settings.geminiKey || '';
+      document.getElementById('settings-dark-toggle').checked = state.settings.darkMode;
+      settingsModal.classList.remove('hidden');
+    }
+
+    function closeSettings() { settingsModal.classList.add('hidden'); }
+
+    function saveSettings() {
+      state.settings.geminiKey = document.getElementById('gemini-key-input').value.trim();
+      state.settings.darkMode = document.getElementById('settings-dark-toggle').checked;
+      saveState();
+      applyTheme();
+      syncToFirestoreIfPossible();
+      closeSettings();
+    }
+
+    function clearAllData() {
+      if (!confirm('¿Seguro que quieres borrar todos los datos de esta app?')) return;
+      state = JSON.parse(JSON.stringify(defaultState));
+      saveState();
+      applyTheme();
+      render();
+      syncToFirestoreIfPossible();
+    }
+
+    function bindEvents() {
+      loginBtn.addEventListener('click', loginWithGoogle);
+      themeToggle.addEventListener('click', () => {
+        state.settings.darkMode = !state.settings.darkMode;
+        applyTheme();
+        saveState();
+        syncToFirestoreIfPossible();
+      });
+      settingsBtn.addEventListener('click', openSettings);
+      saveSettingsBtn.addEventListener('click', saveSettings);
+      clearDataBtn.addEventListener('click', clearAllData);
+      logoutBtn.addEventListener('click', () => { closeSettings(); signOut(); });
+      document.querySelectorAll('.nav-btn').forEach((btn) => btn.addEventListener('click', () => navigateTo(btn.getAttribute('data-tab'))));
+      document.getElementById('note-text-btn').addEventListener('click', () => setNoteMode('text'));
+      document.getElementById('note-pdf-btn').addEventListener('click', () => setNoteMode('pdf'));
+      document.getElementById('analyze-note-btn').addEventListener('click', analyzeNote);
+      document.getElementById('summarize-note-btn').addEventListener('click', summarizeWithGemini);
+      document.getElementById('save-note-btn').addEventListener('click', saveNote);
+      document.getElementById('note-text').addEventListener('input', renderNotes);
+      document.getElementById('pdf-input').addEventListener('change', handlePdfUpload);
+      document.getElementById('add-class-btn').addEventListener('click', addClass);
+      document.getElementById('add-task-btn').addEventListener('click', addTask);
+      document.getElementById('add-flash-btn').addEventListener('click', addFlashcard);
+      document.getElementById('generate-flash-btn').addEventListener('click', generateFlashcardsWithGemini);
+      document.getElementById('flip-flash-btn').addEventListener('click', flipFlashcard);
+      document.getElementById('know-flash-btn').addEventListener('click', () => markFlashcard('know'));
+      document.getElementById('review-flash-btn').addEventListener('click', () => markFlashcard('review'));
+      settingsModal.addEventListener('click', (event) => { if (event.target === settingsModal) closeSettings(); });
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeSettings(); });
+    }
+
+    window.addEventListener('load', async () => {
+      initTheme();
+      bindEvents();
+      initPwa();
+      await initFirebase();
+      render();
+      navigateTo('home');
+      setSyncStatus(navigator.onLine ? 'synced' : 'offline');
+    });
+
+    window.viewNote = viewNote;
+    window.deleteNote = deleteNote;
+    window.toggleTask = toggleTask;
+  </script>
+</body>
+</html>
